@@ -14,16 +14,38 @@ import java.io.Serializable;
  */
 public class Pacote implements Serializable {
 
+    private int id_origem;
+    private int id_destino;
     private TipoPacote tipo;
     private int mensagem;
 
-    public Pacote(TipoPacote tipo) {
+    public Pacote(int id_origem, int id_destino, TipoPacote tipo) {
+        this.id_origem = id_origem;
+        this.id_destino = id_destino;
         this.tipo = tipo;
     }
 
-    public Pacote(TipoPacote tipo, int mensagem) {
+    public Pacote(int id_origem, int id_destino, TipoPacote tipo, int mensagem) {
+        this.id_origem = id_origem;
+        this.id_destino = id_destino;
         this.tipo = tipo;
         this.mensagem = mensagem;
+    }
+
+    public int getId_origem() {
+        return id_origem;
+    }
+
+    public void setId_origem(int id_origem) {
+        this.id_origem = id_origem;
+    }
+
+    public int getId_destino() {
+        return id_destino;
+    }
+
+    public void setId_destino(int id_destino) {
+        this.id_destino = id_destino;
     }
 
     public TipoPacote getTipo() {

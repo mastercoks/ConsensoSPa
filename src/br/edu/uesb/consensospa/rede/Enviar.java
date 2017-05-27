@@ -31,7 +31,6 @@ public final class Enviar implements Runnable {
         try {
 //            System.out.println("Processo[" + id + "]: " + "Cliente " + cliente.getInetAddress() + ":" + cliente.getPort() + " conectado.");
             ObjectOutputStream saida = new ObjectOutputStream(cliente.getOutputStream());
-            saida.write(id);
             saida.writeObject(pacote);
 //            System.out.println("Processo[" + id + "]: " + "Enviando Pacote: " + pacote.getTipo() + " Destido: " + cliente.getPort());
 
