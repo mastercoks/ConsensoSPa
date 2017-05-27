@@ -23,7 +23,7 @@ public class TesteDetectorFalhas {
                 Processo processo[] = new Processo[6];
                 for (int i = 0; i < processo.length; i++) {
                     try {
-                        processo[i] = new Processo(i);
+                        processo[i] = new Processo(i, processo.length);
                     } catch (IOException ex) {
                         Logger.getLogger(TesteDetectorFalhas.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -31,7 +31,7 @@ public class TesteDetectorFalhas {
         
                 for (Processo processo1 : processo) {
                     try {
-                        processo1.iniciarDetectorFalhas(processo.length);
+                        processo1.iniciarDetectorFalhas();
                     } catch (IOException ex) {
                         Logger.getLogger(TesteDetectorFalhas.class.getName()).log(Level.SEVERE, null, ex);
                     }

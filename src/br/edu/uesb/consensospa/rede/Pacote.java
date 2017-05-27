@@ -12,7 +12,7 @@ import java.io.Serializable;
  *
  * @author Matheus
  */
-public class Pacote implements Serializable{
+public class Pacote implements Serializable {
 
     private TipoPacote tipo;
     private int mensagem;
@@ -20,7 +20,7 @@ public class Pacote implements Serializable{
     public Pacote(TipoPacote tipo) {
         this.tipo = tipo;
     }
-    
+
     public Pacote(TipoPacote tipo, int mensagem) {
         this.tipo = tipo;
         this.mensagem = mensagem;

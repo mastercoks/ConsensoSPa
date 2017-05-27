@@ -8,10 +8,6 @@ package br.edu.uesb.consensospa;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -22,31 +18,27 @@ import org.jgrapht.graph.SimpleDirectedGraph;
  */
 public class Processo {
 
-    public List<Integer> processos;
-    public static DirectedGraph<Integer, DefaultEdge> particoes_sincronas;
-    public static List<Integer> defeituosos;
     private final int id;
+    private final int quant_processos;
+    private final List<Integer> processos;
+    private final DirectedGraph<Integer, DefaultEdge> particoes_sincronas;
     private final DetectorFalhas detectorFalhas;
 
-    public Processo(int id) throws IOException {
+    public Processo(int id, int quant_processos) throws IOException {
         this.id = id;
-        processos = new ArrayList<>();
-        particoes_sincronas = new SimpleDirectedGraph<>(DefaultEdge.class);
-        defeituosos = new ArrayList<>();
-        detectorFalhas = new DetectorFalhas(id, 9000 + id, processos);
+        this.quant_processos = quant_processos;
+        this.processos = new ArrayList<>();
+        this.particoes_sincronas = new SimpleDirectedGraph<>(DefaultEdge.class);
+        this.detectorFalhas = new DetectorFalhas(id, 9000 + id, processos, particoes_sincronas, quant_processos);
     }
 
-    public void iniciarDetectorFalhas(int quant_processos) throws IOException {
-        addProcessos(quant_processos);
+    public void iniciarDetectorFalhas() throws IOException {
+        addProcessos();
         addParticoesSincronas();
         detectorFalhas.iniciar();
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public void addProcessos(int quant_processos) {
+    public void addProcessos() {
         for (int i = 0; i < quant_processos; i++) {
             processos.add(i);
         }
