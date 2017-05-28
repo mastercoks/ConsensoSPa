@@ -25,7 +25,7 @@ public class Pacote implements Serializable {
         this.tipo = tipo;
     }
 
-    public Pacote(int id_origem, int id_destino, TipoPacote tipo, int mensagem) {
+    public Pacote(int id_origem, int id_destino, TipoPacote tipo, Object mensagem) {
         this.id_origem = id_origem;
         this.id_destino = id_destino;
         this.tipo = tipo;

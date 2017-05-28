@@ -41,11 +41,4 @@ public class Consenso implements Runnable {
         }
     }
 
-    private class Aceitador {
-
-    }
-
-    private class Aprendiz {
-
-    }
 }

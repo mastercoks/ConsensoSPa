@@ -23,7 +23,7 @@ public class Processo {
     private final int quant_processos;
     private final List<Integer> processos;
     private final List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas;
-    private final DetectorFalhas detectorFalhas;
+    private DetectorFalhas detectorFalhas;
     private final TipoQos[][] qos;
 
     public Processo(int id, int quant_processos) throws IOException {
@@ -33,13 +33,14 @@ public class Processo {
         this.particoes_sincronas = new ArrayList<>();
 //        this.particoes_sincronas = new SimpleDirectedGraph<>(DefaultEdge.class);
         this.qos = new TipoQos[quant_processos][quant_processos];
-        this.detectorFalhas = new DetectorFalhas(id, 9000 + id, processos, particoes_sincronas, quant_processos, qos);
+//        this.detectorFalhas = new DetectorFalhas(id, 9000 + id, processos, particoes_sincronas, quant_processos, qos);
     }
 
     public void iniciarDetectorFalhas() throws IOException {
         addProcessos();
         addParticoesSincronas();
         preencherQoS();
+        detectorFalhas = new DetectorFalhas(id, 9000 + id, processos, particoes_sincronas, quant_processos, qos);
         detectorFalhas.iniciar();
     }
 
