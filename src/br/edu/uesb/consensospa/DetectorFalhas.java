@@ -1,6 +1,7 @@
 package br.edu.uesb.consensospa;
 
 import br.edu.uesb.consensospa.enumerado.TipoPacote;
+import br.edu.uesb.consensospa.enumerado.TipoQos;
 import br.edu.uesb.consensospa.rede.Enviar;
 import br.edu.uesb.consensospa.rede.Pacote;
 import java.io.IOException;
@@ -33,8 +34,9 @@ public class DetectorFalhas {
     private Future<Boolean> future;
     private boolean primeira_rodada;
     private int nr;
+    private final TipoQos[][] qos;
 
-    public DetectorFalhas(int id, int porta, List<Integer> processos, DirectedGraph<Integer, DefaultEdge> particoes_sincronas, int quant_processos) {
+    public DetectorFalhas(int id, int porta, List<Integer> processos, List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas, int quant_processos, TipoQos[][] qos) {
         this.id = id;
         this.porta = porta;
         this.processos = processos;
@@ -45,6 +47,7 @@ public class DetectorFalhas {
         this.crash = false;
         this.primeira_rodada = true;
         this.nr = new Random().nextInt(10);
+        this.qos = qos;
         iniciarTimeouts();
     }
 
@@ -75,8 +78,8 @@ public class DetectorFalhas {
         @Override
         public Boolean call() throws InterruptedException {
             Thread.sleep(5000);
-            if (new Random().nextInt(processos.size()) == 3) {
-//            if (id == 0) {
+            if (new Random().nextInt(processos.size()) == 2) {
+//            if (id == 3) {
                 System.err.println("Processo[" + id + "]: crash...");
                 return true;
             } else {
@@ -128,18 +131,19 @@ public class DetectorFalhas {
                         for (int processoj : processos) {
                             long tempo_atual = System.currentTimeMillis();
                             if (processoj != id && !defeituosos.contains((Integer) processoj) && tempo_atual > timeout[processoj]) {
-                                //checar if(QoS(canal(processo, id)) == T)
-                                defeituosos.add((Integer) processoj);
-                                for (int processox : processos) {
-                                    if (processox != id && processox != processoj) {
-                                        pool.execute(new Enviar(id, "localhost", 9000 + processox, new Pacote(id, processox, TipoPacote.NOTIFICACAO, processoj)));
-                                        System.out.println("Processo[" + id + "]: Notificação enviada para o processo " + processox + " que o processo " + processoj + " falhou. Timeout: " + tempo_atual);
+//                                if (qos[id][processoj] == TipoQos.TIMELY) {
+                                    defeituosos.add((Integer) processoj);
+                                    for (int processox : processos) {
+                                        if (processox != id && processox != processoj) {
+                                            pool.execute(new Enviar(id, "localhost", 9000 + processox, new Pacote(id, processox, TipoPacote.NOTIFICACAO, processoj)));
+                                            System.out.println("Processo[" + id + "]: Notificação enviada para o processo " + processox + " que o processo " + processoj + " falhou. Timeout: " + tempo_atual);
 
+                                        }
                                     }
-                                }
-                                if (processoj == eleicao.getLider()) {
-                                    eleicao.novoLider();
-                                }
+                                    if (processoj == eleicao.getLider()) {
+                                        eleicao.novoLider();
+                                    }
+//                                }
 
                             }
                         }
@@ -204,10 +208,11 @@ public class DetectorFalhas {
                                 }
                                 break;
                             case NOTIFICACAO: //T4
-                                if (!defeituosos.contains((Integer) pacote.getMensagem()) && !defeituosos.contains((Integer) pacote.getId_origem())) {
+                                int processo = (Integer) pacote.getMensagem();
+                                if (!defeituosos.contains(processo) && !defeituosos.contains((Integer) pacote.getId_origem())) {
                                     defeituosos.add((Integer) pacote.getMensagem());
                                     // Observação: Eu alterei a estrutura do algoritmo, verificar com o professor!
-                                    if (pacote.getMensagem() == eleicao.getLider()) {
+                                    if (pacote.getMensagem() == (Integer) eleicao.getLider()) {
                                         eleicao.novoLider();
                                     }
                                     // FimObservação

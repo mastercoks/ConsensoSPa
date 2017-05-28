@@ -11,9 +11,10 @@ public class Eleicao {
     private int mutex;
     private final List<Integer> processos;
     private final List<Integer> defeituosos;
-    private final DirectedGraph<Integer, DefaultEdge> particoes_sincronas;
+    private final List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas;
+//    private final DirectedGraph<Integer, DefaultEdge> particoes_sincronas;
 
-    public Eleicao(int id, List<Integer> processos, List<Integer> defeituosos, DirectedGraph<Integer, DefaultEdge> particoes_sincronas) {
+    public Eleicao(int id, List<Integer> processos, List<Integer> defeituosos, List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas) {
         this.id = id;
         this.processos = processos;
         this.defeituosos = defeituosos;
@@ -22,14 +23,17 @@ public class Eleicao {
         this.mutex = 0;
     }
 
-    @SuppressWarnings({"empty-statement"})
-    public int getLider() {
-        while (mutex != 0);
-        return lider;
-    }
-
     public void novoLider() {
         new NovoLider().start();
+    }
+
+    public boolean contemVertice(int vertice) {
+        for (DirectedGraph<Integer, DefaultEdge> particao_sincrona : particoes_sincronas) {
+            if (particao_sincrona.containsVertex(vertice)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public class NovoLider extends Thread {
@@ -37,7 +41,7 @@ public class Eleicao {
         @Override
         public void run() {
             for (int i = 0; i < processos.size(); i++) {
-                if (particoes_sincronas.containsVertex(processos.get(i)) && !defeituosos.contains(processos.get(i)) && processos.get(i) > lider) {
+                if (contemVertice(processos.get(i)) && !defeituosos.contains(processos.get(i))) {
                     mutex = 1;
                     lider = processos.get(i);
                     mutex = 0;
@@ -47,4 +51,23 @@ public class Eleicao {
             }
         }
     }
+
+    @SuppressWarnings({"empty-statement"})
+    public int getLider() {
+        while (mutex != 0);
+        return lider;
+    }
+
+    public List<Integer> getProcessos() {
+        return processos;
+    }
+
+    public List<Integer> getDefeituosos() {
+        return defeituosos;
+    }
+
+    public List<DirectedGraph<Integer, DefaultEdge>> getParticoes_sincronas() {
+        return particoes_sincronas;
+    }
+
 }

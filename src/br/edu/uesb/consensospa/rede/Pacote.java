@@ -17,7 +17,7 @@ public class Pacote implements Serializable {
     private int id_origem;
     private int id_destino;
     private TipoPacote tipo;
-    private int mensagem;
+    private Object mensagem;
 
     public Pacote(int id_origem, int id_destino, TipoPacote tipo) {
         this.id_origem = id_origem;
@@ -52,7 +52,7 @@ public class Pacote implements Serializable {
         return tipo;
     }
 
-    public int getMensagem() {
+    public Object getMensagem() {
         return mensagem;
     }
 
