@@ -43,17 +43,17 @@ public class DetectorFalhas {
         this.defeituosos = new ArrayList<>();
         this.pool = Executors.newCachedThreadPool();
         this.timeout = new long[quant_processos];
-        this.eleicao = new Eleicao(id, processos, (List<Integer>) defeituosos, encontrarParticao(particoes_sincronas));
+        this.eleicao = new Eleicao(id, processos, defeituosos, encontrarParticao(particoes_sincronas));
         this.crash = false;
         this.primeira_rodada = true;
         this.nr = new Random().nextInt(10);
         this.qos = qos;
         iniciarTimeouts();
     }
-    
+
     private DirectedGraph<Integer, DefaultEdge> encontrarParticao(List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas) {
-        for(DirectedGraph<Integer, DefaultEdge> particao_sincrona : particoes_sincronas) {
-            if(particao_sincrona.containsVertex(id)) {
+        for (DirectedGraph<Integer, DefaultEdge> particao_sincrona : particoes_sincronas) {
+            if (particao_sincrona.containsVertex(id)) {
                 return particao_sincrona;
             }
         }
@@ -87,8 +87,8 @@ public class DetectorFalhas {
         @Override
         public Boolean call() throws InterruptedException {
             Thread.sleep(5000);
-//            if (new Random().nextInt(processos.size()) == 2) {
-            if (id == 0) {
+            if (new Random().nextInt(processos.size()) == 2) {
+//            if (id == 0) {
                 System.err.println("Processo[" + id + "]: crash...");
                 return true;
             } else {
@@ -118,7 +118,7 @@ public class DetectorFalhas {
                         Thread.sleep(2000 * nr);
                         crash = false;
                         System.out.println("Processo[" + id + "]: Se recuperou do crash.");
-                        if(id == eleicao.getLider()) {
+                        if (id == eleicao.getLider()) {
                             eleicao.novoLider();
                         }
 
@@ -224,7 +224,7 @@ public class DetectorFalhas {
                                 if (!defeituosos.contains(processo) && !defeituosos.contains((Integer) pacote.getId_origem())) {
                                     defeituosos.add((Integer) pacote.getMensagem());
                                     // Observação: Eu alterei a estrutura do algoritmo, verificar com o professor!
-                                    if ((Integer) pacote.getMensagem() ==  eleicao.getLider()) {
+                                    if ((Integer) pacote.getMensagem() == eleicao.getLider()) {
                                         eleicao.novoLider();
                                     }
                                     // FimObservação

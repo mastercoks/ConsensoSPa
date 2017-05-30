@@ -9,6 +9,8 @@ import br.edu.uesb.consensospa.enumerado.TipoQos;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -24,6 +26,7 @@ public class Processo {
     private final List<Integer> processos;
     private final List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas;
     private DetectorFalhas detectorFalhas;
+    private Consenso consenso;
     private final TipoQos[][] qos;
 
     public Processo(int id, int quant_processos) throws IOException {
@@ -34,6 +37,14 @@ public class Processo {
 //        this.particoes_sincronas = new SimpleDirectedGraph<>(DefaultEdge.class);
         this.qos = new TipoQos[quant_processos][quant_processos];
 //        this.detectorFalhas = new DetectorFalhas(id, 9000 + id, processos, particoes_sincronas, quant_processos, qos);
+    }
+    
+    public void iniciarConsenso() throws InterruptedException, ExecutionException {
+        addProcessos();
+        addParticoesSincronas();
+        preencherQoS();
+        consenso = new Consenso(id, Executors.newCachedThreadPool(), new Eleicao(id, processos, new ArrayList<>(), particoes_sincronas.get(0)));
+//        consenso.iniciar();
     }
 
     public void iniciarDetectorFalhas() throws IOException {
@@ -117,4 +128,8 @@ public class Processo {
         particoes_sincronas.add(particao_sincrona_1);
     }
 
+    public Consenso getConsenso() {
+        return consenso;
+    }
+    
 }

@@ -5,40 +5,30 @@
  */
 package br.edu.uesb.consensospa;
 
-import br.edu.uesb.consensospa.rede.Enviar;
-import br.edu.uesb.consensospa.rede.Pacote;
-import br.edu.uesb.consensospa.enumerado.TipoPacote;
-import java.io.IOException;
+import br.edu.uesb.consensospa.enumerado.TipoValor;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  *
  * @author Matheus
  */
-public class Consenso implements Runnable {
+public class Consenso extends ConsensoAbstrato {
 
-    private final int id;
-    private int rodada;
-    private int maiorRodada;
-    private List<Integer> quorum;
-    private Eleicao eleicao;
+    
 
-    public Consenso(int id, Eleicao eleicao) {
-        this.id = id;
-        this.eleicao = eleicao;
-        this.rodada = 0;
-        this.maiorRodada = 0;
-        this.quorum = new ArrayList<>();
+    public Consenso(int id, ExecutorService executorService, Eleicao eleicao) {
+        super(id, 0, 0, new ArrayList<>(), eleicao.getProcessos(), executorService, eleicao);
     }
 
-    @Override
-    public void run() {
-        while (eleicao.getLider() == id) {
-            new Thread(new Proponente(id, rodada, maiorRodada, eleicao, quorum)).start();
-        }
+    public void iniciar() throws InterruptedException, ExecutionException {
+        getExecutorService().execute(new Proponente(getId(), getRodada(), getMaior_rodada(), getValor(), getQuorum(), getProcessos(), getExecutorService(), getEleicao()));
+        new Aceitador(getId(), getRodada(), getMaior_rodada(), getValor(), getQuorum(), getProcessos(), getExecutorService()).iniciar();
+        Future<TipoValor> future = getExecutorService().submit(new Aprendiz(getId(), getRodada(), getQuorum(), getProcessos(), getExecutorService(), getEleicao()));
+        setValor(future.get());
+        System.out.println(getValor());
     }
-
 }

@@ -5,19 +5,21 @@
  */
 package br.edu.uesb.consensospa.mensagens;
 
+import br.edu.uesb.consensospa.enumerado.TipoValor;
+
 /**
  *
  * @author Matheus
  */
 public class Decisao {
 
-    private final int valor;
+    private final TipoValor valor;
 
-    public Decisao(int valor) {
+    public Decisao(TipoValor valor) {
         this.valor = valor;
     }
 
-    public int getValor() {
+    public TipoValor getValor() {
         return valor;
     }
 

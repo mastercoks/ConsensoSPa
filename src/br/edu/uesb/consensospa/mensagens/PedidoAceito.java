@@ -5,6 +5,7 @@
  */
 package br.edu.uesb.consensospa.mensagens;
 
+import br.edu.uesb.consensospa.enumerado.TipoValor;
 import java.util.List;
 
 /**
@@ -14,10 +15,10 @@ import java.util.List;
 public class PedidoAceito {
 
     private final int rodada;
-    private final int valor;
+    private final TipoValor valor;
     private final List<Integer> quorum;
 
-    public PedidoAceito(int rodada, int valor, List<Integer> quorum) {
+    public PedidoAceito(int rodada, TipoValor valor, List<Integer> quorum) {
         this.rodada = rodada;
         this.valor = valor;
         this.quorum = quorum;
@@ -27,7 +28,7 @@ public class PedidoAceito {
         return rodada;
     }
 
-    public int getValor() {
+    public TipoValor getValor() {
         return valor;
     }
 

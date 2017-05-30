@@ -5,6 +5,8 @@
  */
 package br.edu.uesb.consensospa.mensagens;
 
+import br.edu.uesb.consensospa.enumerado.TipoValor;
+
 /**
  *
  * @author Matheus
@@ -12,9 +14,9 @@ package br.edu.uesb.consensospa.mensagens;
 public class ConfirmacaoPedidoAceito {
 
     private final int rodada;
-    private final int valor;
+    private final TipoValor valor;
 
-    public ConfirmacaoPedidoAceito(int rodada, int valor) {
+    public ConfirmacaoPedidoAceito(int rodada, TipoValor valor) {
         this.rodada = rodada;
         this.valor = valor;
     }
@@ -23,7 +25,7 @@ public class ConfirmacaoPedidoAceito {
         return rodada;
     }
 
-    public int getValor() {
+    public TipoValor getValor() {
         return valor;
     }
 
