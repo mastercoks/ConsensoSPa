@@ -18,9 +18,9 @@ public class ConfirmacaoPrepararPedido implements Serializable {
     private final int rodada_destino;
     private final TipoValor valor;
 
-    public ConfirmacaoPrepararPedido(int rodada_origem, int rodada_destino, TipoValor valor) {
-        this.rodada_origem = rodada_origem;
+    public ConfirmacaoPrepararPedido(int rodada_destino, int rodada_origem, TipoValor valor) {
         this.rodada_destino = rodada_destino;
+        this.rodada_origem = rodada_origem;
         this.valor = valor;
     }
 
@@ -38,7 +38,7 @@ public class ConfirmacaoPrepararPedido implements Serializable {
 
     @Override
     public String toString() {
-        return "(" + rodada_origem + ", " + rodada_destino + ", " + valor;
+        return "(" + rodada_destino + ", " + rodada_origem + ", " + valor + ")";
     }
 
 }

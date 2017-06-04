@@ -1,4 +1,4 @@
-package br.edu.uesb.consensospa;
+package br.edu.uesb.consensospa.detectorfalhas;
 
 import br.edu.uesb.consensospa.enumerado.TipoPacote;
 import br.edu.uesb.consensospa.enumerado.TipoQos;
@@ -43,21 +43,12 @@ public class DetectorFalhas {
         this.defeituosos = new ArrayList<>();
         this.pool = Executors.newCachedThreadPool();
         this.timeout = new long[quant_processos];
-        this.eleicao = new Eleicao(id, processos, defeituosos, encontrarParticao(particoes_sincronas));
+        this.eleicao = new Eleicao(id, processos, defeituosos, particoes_sincronas);
         this.crash = false;
         this.primeira_rodada = true;
         this.nr = new Random().nextInt(10);
         this.qos = qos;
         iniciarTimeouts();
-    }
-
-    private DirectedGraph<Integer, DefaultEdge> encontrarParticao(List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas) {
-        for (DirectedGraph<Integer, DefaultEdge> particao_sincrona : particoes_sincronas) {
-            if (particao_sincrona.containsVertex(id)) {
-                return particao_sincrona;
-            }
-        }
-        return null;
     }
 
     public void iniciar() throws IOException {
@@ -86,9 +77,9 @@ public class DetectorFalhas {
 
         @Override
         public Boolean call() throws InterruptedException {
-            Thread.sleep(5000);
-            if (new Random().nextInt(processos.size()) == 2) {
-//            if (id == 0) {
+            Thread.sleep(2000 * nr);
+//            if (new Random().nextInt(processos.size()) == 2) {
+            if (id == 0) {
                 System.err.println("Processo[" + id + "]: crash...");
                 return true;
             } else {
@@ -104,16 +95,16 @@ public class DetectorFalhas {
         public void run() {
             try {
                 while (true) {
-                    Thread.sleep(3000);
+                    Thread.sleep(1500);
                     if (!crash) {
                         for (int processo : processos) {
                             if (processo != id) {
-                                timeout[processo] = System.currentTimeMillis() + 2000;   //Tempo atual + delay
+                                timeout[processo] = System.currentTimeMillis() + 1000;   //Tempo atual + delay
                                 pool.execute(new Enviar(id, "localhost", 9000 + processo, new Pacote(id, processo, TipoPacote.VOCE_ESTA_VIVO)));
 
                             }
                         }
-                        System.out.println("Processo[" + id + "]: Lider: " + eleicao.getLider() + " Defeituosos: " + defeituosos + " Crash:" + crash + " Timeouts: " + getTimeouts());
+                        System.out.println("Processo[" + id + "]: Lider: " + eleicao.getLider() + " Defeituosos: " + defeituosos);
                     } else {
                         Thread.sleep(2000 * nr);
                         crash = false;
@@ -148,7 +139,9 @@ public class DetectorFalhas {
                                     for (int processox : processos) {
                                         if (processox != id && processox != processoj) {
                                             pool.execute(new Enviar(id, "localhost", 9000 + processox, new Pacote(id, processox, TipoPacote.NOTIFICACAO, processoj)));
-                                            System.out.println("Processo[" + id + "]: Notificação enviada para o processo " + processox + " que o processo " + processoj + " falhou. Timeout: " + tempo_atual);
+                                            System.out.println("Processo[" + id + "]: Notificação enviada para o processo "
+                                                    + processox + " que o processo " + processoj + " falhou. Timeout: "
+                                                    + tempo_atual + " Timeouts: " + getTimeouts());
 
                                         }
                                     }
@@ -220,7 +213,7 @@ public class DetectorFalhas {
                                 }
                                 break;
                             case NOTIFICACAO: //T4
-                                    int processo = (Integer) pacote.getMensagem();
+                                int processo = (Integer) pacote.getMensagem();
                                 if (!defeituosos.contains(processo) && !defeituosos.contains((Integer) pacote.getId_origem())) {
                                     defeituosos.add((Integer) pacote.getMensagem());
                                     // Observação: Eu alterei a estrutura do algoritmo, verificar com o professor!

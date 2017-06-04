@@ -5,7 +5,7 @@
  */
 package lixo;
 
-import br.edu.uesb.consensospa.Processo;
+import br.edu.uesb.consensospa.detectorfalhas.Processo;
 import br.edu.uesb.consensospa.enumerado.TipoPacote;
 import java.io.IOException;
 import java.io.ObjectInputStream;

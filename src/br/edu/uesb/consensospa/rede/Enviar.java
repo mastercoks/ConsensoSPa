@@ -23,7 +23,7 @@ public final class Enviar implements Runnable {
     public Enviar(int id, String host, int porta, Pacote pacote) throws UnknownHostException, IOException, ClassNotFoundException {
         this.id = id;
         this.pacote = pacote;
-        cliente = new Socket(host, porta);
+        this.cliente = new Socket(host, porta);
     }
 
     @Override

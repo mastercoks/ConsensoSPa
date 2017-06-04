@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package br.edu.uesb.consensospa;
+package br.edu.uesb.consensospa.detectorfalhas;
 
+import br.edu.uesb.consensospa.consenso.Consenso;
 import br.edu.uesb.consensospa.enumerado.TipoQos;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,14 +39,13 @@ public class Processo {
         this.particoes_sincronas = new ArrayList<>();
         this.qos = new TipoQos[quant_processos][quant_processos];
         this.executorService = Executors.newCachedThreadPool();
-//        this.detectorFalhas = new DetectorFalhas(id, 9000 + id, processos, particoes_sincronas, quant_processos, qos);
     }
 
     public void iniciarConsenso() throws InterruptedException, ExecutionException {
         addProcessos();
         addParticoesSincronas();
         preencherQoS();
-        consenso = new Consenso(id, executorService, new Eleicao(id, processos, new ArrayList<>(), encontrarParticao()), particoes_sincronas);
+        consenso = new Consenso(id, executorService, new Eleicao(id, processos, new ArrayList<>(), particoes_sincronas));
         consenso.iniciar();
     }
 
@@ -55,15 +55,6 @@ public class Processo {
         preencherQoS();
         detectorFalhas = new DetectorFalhas(id, 9000 + id, processos, particoes_sincronas, quant_processos, qos);
         detectorFalhas.iniciar();
-    }
-
-    private DirectedGraph<Integer, DefaultEdge> encontrarParticao() {
-        for (DirectedGraph<Integer, DefaultEdge> particao_sincrona : particoes_sincronas) {
-            if (particao_sincrona.containsVertex(id)) {
-                return particao_sincrona;
-            }
-        }
-        return null;
     }
 
     private void preencherQoS() {

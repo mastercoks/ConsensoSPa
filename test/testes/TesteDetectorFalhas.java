@@ -5,7 +5,7 @@
  */
 package testes;
 
-import br.edu.uesb.consensospa.Processo;
+import br.edu.uesb.consensospa.detectorfalhas.Processo;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;

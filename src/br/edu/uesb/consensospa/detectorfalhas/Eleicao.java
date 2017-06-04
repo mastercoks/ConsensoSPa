@@ -1,4 +1,4 @@
-package br.edu.uesb.consensospa;
+package br.edu.uesb.consensospa.detectorfalhas;
 
 import java.util.List;
 import org.jgrapht.DirectedGraph;
@@ -11,10 +11,9 @@ public class Eleicao {
     private int mutex;
     private final List<Integer> processos;
     private final List<Integer> defeituosos;
-//    private final List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas;
-    private final DirectedGraph<Integer, DefaultEdge> particoes_sincronas;
+    private final List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas;
 
-    public Eleicao(int id, List<Integer> processos, List<Integer> defeituosos, DirectedGraph<Integer, DefaultEdge> particoes_sincronas) {
+    public Eleicao(int id, List<Integer> processos, List<Integer> defeituosos, List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas) {
         this.id = id;
         this.processos = processos;
         this.defeituosos = defeituosos;
@@ -24,15 +23,13 @@ public class Eleicao {
     }
 
     private Integer menorProcesso() {
-//        for (DirectedGraph<Integer, DefaultEdge> particao_sincrona : particoes_sincronas) {
-        if (particoes_sincronas.containsVertex(id)) {
+        for (DirectedGraph<Integer, DefaultEdge> particao_sincrona : particoes_sincronas) {
             for (int processo : processos) {
-                if (particoes_sincronas.containsVertex(processo)) {
+                if (particao_sincrona.containsVertex(processo)) {
                     return processo;
                 }
             }
         }
-//        }
         return null;
     }
 
@@ -49,7 +46,7 @@ public class Eleicao {
         @Override
         public void run() {
             for (int i = 0; i < processos.size(); i++) {
-                if (particoes_sincronas.containsVertex(processos.get(i)) && !defeituosos.contains(processos.get(i)) && lider != i) {
+                if (contemVertice(processos.get(i)) && !defeituosos.contains(processos.get(i)) && lider != i) {
                     mutex = 1;
                     lider = processos.get(i);
                     mutex = 0;
@@ -58,6 +55,15 @@ public class Eleicao {
                 }
             }
         }
+    }
+
+    public boolean contemVertice(int vertice) {
+        for (DirectedGraph<Integer, DefaultEdge> particao_sincrona : particoes_sincronas) {
+            if (particao_sincrona.containsVertex(vertice)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @SuppressWarnings({"empty-statement"})
@@ -74,7 +80,7 @@ public class Eleicao {
         return defeituosos;
     }
 
-    public DirectedGraph<Integer, DefaultEdge> getParticoes_sincronas() {
+    public List<DirectedGraph<Integer, DefaultEdge>> getParticoes_sincronas() {
         return particoes_sincronas;
     }
 
