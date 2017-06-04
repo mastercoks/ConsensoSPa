@@ -1,4 +1,4 @@
-package br.edu.uesb.consensospa;
+package br.edu.uesb.consensospa.consenso;
 
 import br.edu.uesb.consensospa.enumerado.TipoPacote;
 import br.edu.uesb.consensospa.enumerado.TipoValor;
@@ -8,56 +8,55 @@ import br.edu.uesb.consensospa.rede.NetworkService;
 import br.edu.uesb.consensospa.rede.Pacote;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-public class Aprendiz extends ConsensoAbstrato implements Callable<TipoValor> {
+public class Aprendiz implements Callable<TipoValor> {
 
-    public Aprendiz(int id, int rodada, List<Integer> quorum, ExecutorService executorService, Eleicao eleicao) {
-        super(id, rodada, quorum, executorService, eleicao);
+    private final Consenso consenso;
+
+    public Aprendiz(Consenso consenso) {
+        this.consenso = consenso;
     }
 
     @Override
     public TipoValor call() throws IOException, UnknownHostException, ClassNotFoundException, InterruptedException, ExecutionException {
         int quant_confirmacoes_recebidas = 0;
-        NetworkService rede = new NetworkService(8300 + getId());
+        NetworkService rede = new NetworkService(8300 + consenso.getId());
         while (true) {
-            Future<Pacote> future = getExecutorService().submit(rede);
+            Future<Pacote> future = consenso.getExecutorService().submit(rede);
             Pacote pacote = future.get();
             if (pacote.getTipo() == TipoPacote.CONFIRMACAO_PEDIDO_ACEITO) {
                 ConfirmacaoPedidoAceito mensagem_recebida = (ConfirmacaoPedidoAceito) pacote.getMensagem();
 
-                System.out.println("Processo[" + getId() + "]: Pacote Recebido: "
+                System.out.println("Processo[" + consenso.getId() + "]: Pacote Recebido: "
                         + pacote + " do o processo "
-                        + pacote.getId_origem() + " Quorum: " + getQuorum()
+                        + pacote.getId_origem() + " Quorum: " + consenso.getQuorum()
                         + " recebidos = " + quant_confirmacoes_recebidas);
 
-                removeAllQuorum(getEleicao().getDefeituosos()); //verificar se funciona!
-                if (getRodada() == mensagem_recebida.getRodada() && getQuorum().contains(pacote.getId_origem())) {
+                consenso.removeAllQuorum(consenso.getEleicao().getDefeituosos()); //verificar se funciona!
+                if (consenso.getRodada() == mensagem_recebida.getRodada() && consenso.getQuorum().contains(pacote.getId_origem())) {
                     quant_confirmacoes_recebidas++;
-                    if (quant_confirmacoes_recebidas == getQuorum().size() - 1) {
+                    if (quant_confirmacoes_recebidas == consenso.getQuorum().size() - 1) {
                         TipoValor valor = mensagem_recebida.getValor();
                         Decisao mensagem = new Decisao(valor);
-                        pacote = new Pacote(getId(), TipoPacote.DECISAO, mensagem);
-                        broadcast(8300, pacote);
-                        System.out.println("broadcast(8300, " + pacote + ")");
+                        pacote = new Pacote(consenso.getId(), TipoPacote.DECISAO, mensagem);
+                        consenso.broadcast(8300, pacote);
                         rede.fecharServidor();
                         return valor;
                     }
                 }
             } else if (pacote.getTipo() == TipoPacote.DECISAO) {
+                System.out.println("Processo[" + consenso.getId() + "]: Pacote Recebido: " + pacote + " do o processo " + pacote.getId_origem());
                 TipoValor valor = ((Decisao) pacote.getMensagem()).getValor();
                 Decisao mensagem = new Decisao(valor);
-                pacote = new Pacote(getId(), TipoPacote.DECISAO, mensagem);
-                broadcast(8300, pacote);
-                System.out.println("broadcast(8300, " + pacote + ")");
+                pacote = new Pacote(consenso.getId(), TipoPacote.DECISAO, mensagem);
+                consenso.broadcast(8300, pacote);
                 rede.fecharServidor();
                 return valor;
             }
         }
     }
-    
+
 }
