@@ -5,11 +5,13 @@
  */
 package br.edu.uesb.consensospa.mensagens;
 
+import java.io.Serializable;
+
 /**
  *
  * @author Matheus
  */
-public class PrepararPedido {
+public class PrepararPedido implements Serializable {
 
     private final int rodada;
 
@@ -19,6 +21,11 @@ public class PrepararPedido {
 
     public int getRodada() {
         return rodada;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + rodada + ")";
     }
 
 }

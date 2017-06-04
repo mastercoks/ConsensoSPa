@@ -6,6 +6,7 @@
 package br.edu.uesb.consensospa.rede;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -21,19 +22,27 @@ public class NetworkService implements Callable<Pacote> {
 
     private final ServerSocket serverSocket;
     private final ExecutorService pool;
+    private final int porta;
 
-    public NetworkService(int port) throws IOException {
-        serverSocket = new ServerSocket(port);
+    public NetworkService(int porta) throws IOException {
+        this.porta = porta;
+        serverSocket = new ServerSocket(porta);
         pool = Executors.newCachedThreadPool();
+        System.out.println("Servidor aberto na porta: " + serverSocket.getLocalPort());
+    }
+
+    public void fecharServidor() throws IOException {
+        serverSocket.close();
+        pool.shutdown();
+        System.out.println("Servidor fechado na porta: " + serverSocket.getLocalPort());
     }
 
     @Override
     public Pacote call() throws InterruptedException, ExecutionException {
         try {
+            serverSocket.setReuseAddress(true);
             Future<Pacote> future = pool.submit(new ServicoReceber(serverSocket.accept()));
-            pool.shutdown();
             Pacote pacote = future.get();
-            serverSocket.close();
             return pacote;
 
         } catch (IOException ex) {

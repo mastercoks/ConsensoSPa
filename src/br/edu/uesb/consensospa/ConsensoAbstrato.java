@@ -22,50 +22,50 @@ public abstract class ConsensoAbstrato {
 
     private final int id;
     private int rodada;
-    private int maior_rodada;
+    private int ultima_rodada;
     private TipoValor valor;
     private List<Integer> quorum;
     private final List<Integer> processos;
     private final ExecutorService executorService;
     private Eleicao eleicao;
 
-    public ConsensoAbstrato(int id, int rodada, List<Integer> quorum, List<Integer> processos, ExecutorService executorService, Eleicao eleicao) {
+    public ConsensoAbstrato(int id, int rodada, List<Integer> quorum, ExecutorService executorService, Eleicao eleicao) {
         this.id = id;
         this.rodada = rodada;
         this.quorum = quorum;
-        this.processos = processos;
+        this.processos = eleicao.getProcessos();
         this.executorService = executorService;
         this.eleicao = eleicao;
     }
 
-    public ConsensoAbstrato(int id, int rodada, int maior_rodada, List<Integer> quorum, List<Integer> processos, ExecutorService executorService, Eleicao eleicao) {
+    public ConsensoAbstrato(int id, int rodada, int ultima_rodada, List<Integer> quorum, ExecutorService executorService, Eleicao eleicao) {
         this.id = id;
         this.rodada = rodada;
-        this.maior_rodada = maior_rodada;
+        this.ultima_rodada = ultima_rodada;
         this.valor = escolherValor();
         this.quorum = quorum;
-        this.processos = processos;
+        this.processos = eleicao.getProcessos();
         this.executorService = executorService;
         this.eleicao = eleicao;
     }
 
-    public ConsensoAbstrato(int id, int rodada, int maior_rodada, TipoValor valor, List<Integer> quorum, List<Integer> processos, ExecutorService executorService) {
+    public ConsensoAbstrato(int id, int rodada, int ultima_rodada, TipoValor valor, List<Integer> quorum, List<Integer> processos, ExecutorService executorService) {
         this.id = id;
         this.rodada = rodada;
-        this.maior_rodada = maior_rodada;
+        this.ultima_rodada = ultima_rodada;
         this.valor = valor;
         this.quorum = quorum;
         this.processos = processos;
         this.executorService = executorService;
     }
-    
-    public ConsensoAbstrato(int id, int rodada, int maior_rodada, TipoValor valor, List<Integer> quorum, List<Integer> processos, ExecutorService executorService, Eleicao eleicao) {
+
+    public ConsensoAbstrato(int id, int rodada, int ultima_rodada, TipoValor valor, List<Integer> quorum, ExecutorService executorService, Eleicao eleicao) {
         this.id = id;
         this.rodada = rodada;
-        this.maior_rodada = maior_rodada;
+        this.ultima_rodada = ultima_rodada;
         this.valor = valor;
         this.quorum = quorum;
-        this.processos = processos;
+        this.processos = eleicao.getProcessos();
         this.executorService = executorService;
         this.eleicao = eleicao;
     }
@@ -75,15 +75,16 @@ public abstract class ConsensoAbstrato {
             if (processo != id) {
                 pacote.setId_destino(processo);
                 executorService.execute(new Enviar(id, "localhost", porta + processo, pacote));
+                System.out.println("Processo[" + getId() + "]: Pacote Enviado: " + pacote + " para o processo " + processo);
             }
         }
     }
 
-    public int maior(int rodada, int maiorRodada) {
-        if (rodada > maiorRodada) {
+    public int maior(int rodada, int ultima_rodada) {
+        if (rodada > ultima_rodada) {
             return rodada;
         } else {
-            return maiorRodada;
+            return ultima_rodada;
         }
     }
 
@@ -108,12 +109,12 @@ public abstract class ConsensoAbstrato {
         this.rodada = rodada;
     }
 
-    public int getMaior_rodada() {
-        return maior_rodada;
+    public int getUltima_rodada() {
+        return ultima_rodada;
     }
 
-    public void setMaior_rodada(int maior_rodada) {
-        this.maior_rodada = maior_rodada;
+    public void setUltima_rodada(int ultima_rodada) {
+        this.ultima_rodada = ultima_rodada;
     }
 
     public TipoValor getValor() {
@@ -146,6 +147,18 @@ public abstract class ConsensoAbstrato {
 
     public Eleicao getEleicao() {
         return eleicao;
+    }
+
+    public boolean addQuorum(int processo) {
+        return quorum.add(processo);
+    }
+
+    public boolean removeQuorum(int processo) {
+        return quorum.remove((Integer) processo);
+    }
+
+    public boolean removeAllQuorum(List<Integer> processos) {
+        return quorum.removeAll(processos);
     }
 
 }

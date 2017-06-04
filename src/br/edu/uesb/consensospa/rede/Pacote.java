@@ -70,4 +70,9 @@ public class Pacote implements Serializable {
         this.mensagem = mensagem;
     }
 
+    @Override
+    public String toString() {
+        return tipo.toString() + mensagem.toString();
+    }
+
 }

@@ -6,12 +6,13 @@
 package br.edu.uesb.consensospa.mensagens;
 
 import br.edu.uesb.consensospa.enumerado.TipoValor;
+import java.io.Serializable;
 
 /**
  *
  * @author Matheus
  */
-public class ConfirmacaoPedidoAceito {
+public class ConfirmacaoPedidoAceito implements Serializable {
 
     private final int rodada;
     private final TipoValor valor;
@@ -27,6 +28,11 @@ public class ConfirmacaoPedidoAceito {
 
     public TipoValor getValor() {
         return valor;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + rodada + ", " + valor + ")";
     }
 
 }

@@ -14,7 +14,7 @@ public class Eleicao {
 //    private final List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas;
     private final DirectedGraph<Integer, DefaultEdge> particoes_sincronas;
 
-    public Eleicao(int id, List<Integer> processos, List<Integer> defeituosos,DirectedGraph<Integer, DefaultEdge> particoes_sincronas) {
+    public Eleicao(int id, List<Integer> processos, List<Integer> defeituosos, DirectedGraph<Integer, DefaultEdge> particoes_sincronas) {
         this.id = id;
         this.processos = processos;
         this.defeituosos = defeituosos;
@@ -25,13 +25,13 @@ public class Eleicao {
 
     private Integer menorProcesso() {
 //        for (DirectedGraph<Integer, DefaultEdge> particao_sincrona : particoes_sincronas) {
-            if (particoes_sincronas.containsVertex(id)) {
-                for (int processo : processos) {
-                    if (particoes_sincronas.containsVertex(processo)) {
-                        return processo;
-                    }
+        if (particoes_sincronas.containsVertex(id)) {
+            for (int processo : processos) {
+                if (particoes_sincronas.containsVertex(processo)) {
+                    return processo;
                 }
             }
+        }
 //        }
         return null;
     }
@@ -40,14 +40,9 @@ public class Eleicao {
         new NovoLider().start();
     }
 
-//    public boolean contemVertice(int vertice) {
-//        for (DirectedGraph<Integer, DefaultEdge> particao_sincrona : particoes_sincronas) {
-//            if (particao_sincrona.containsVertex(vertice)) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
+    boolean isLider() {
+        return id == lider;
+    }
 
     public class NovoLider extends Thread {
 

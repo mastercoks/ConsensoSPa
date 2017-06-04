@@ -6,12 +6,13 @@
 package br.edu.uesb.consensospa.mensagens;
 
 import br.edu.uesb.consensospa.enumerado.TipoValor;
+import java.io.Serializable;
 
 /**
  *
  * @author Matheus
  */
-public class Decisao {
+public class Decisao implements Serializable {
 
     private final TipoValor valor;
 
@@ -21,6 +22,11 @@ public class Decisao {
 
     public TipoValor getValor() {
         return valor;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + valor + ")";
     }
 
 }

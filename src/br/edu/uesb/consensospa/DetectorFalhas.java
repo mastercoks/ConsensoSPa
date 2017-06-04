@@ -220,7 +220,7 @@ public class DetectorFalhas {
                                 }
                                 break;
                             case NOTIFICACAO: //T4
-                                int processo = (Integer) pacote.getMensagem();
+                                    int processo = (Integer) pacote.getMensagem();
                                 if (!defeituosos.contains(processo) && !defeituosos.contains((Integer) pacote.getId_origem())) {
                                     defeituosos.add((Integer) pacote.getMensagem());
                                     // Observação: Eu alterei a estrutura do algoritmo, verificar com o professor!

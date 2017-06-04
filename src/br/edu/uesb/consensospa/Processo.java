@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.DirectedGraph;
@@ -20,7 +21,7 @@ import org.jgrapht.graph.SimpleDirectedGraph;
  * @author Matheus
  */
 public class Processo {
-    
+
     private final int id;
     private final int quant_processos;
     private final List<Integer> processos;
@@ -28,23 +29,24 @@ public class Processo {
     private DetectorFalhas detectorFalhas;
     private Consenso consenso;
     private final TipoQos[][] qos;
+    private final ExecutorService executorService;
 
     public Processo(int id, int quant_processos) throws IOException {
         this.id = id;
         this.quant_processos = quant_processos;
         this.processos = new ArrayList<>();
         this.particoes_sincronas = new ArrayList<>();
-//        this.particoes_sincronas = new SimpleDirectedGraph<>(DefaultEdge.class);
         this.qos = new TipoQos[quant_processos][quant_processos];
+        this.executorService = Executors.newCachedThreadPool();
 //        this.detectorFalhas = new DetectorFalhas(id, 9000 + id, processos, particoes_sincronas, quant_processos, qos);
     }
-    
+
     public void iniciarConsenso() throws InterruptedException, ExecutionException {
         addProcessos();
         addParticoesSincronas();
         preencherQoS();
-        consenso = new Consenso(id, Executors.newCachedThreadPool(), new Eleicao(id, processos, new ArrayList<>(), particoes_sincronas.get(0)));
-//        consenso.iniciar();
+        consenso = new Consenso(id, executorService, new Eleicao(id, processos, new ArrayList<>(), encontrarParticao()), particoes_sincronas);
+        consenso.iniciar();
     }
 
     public void iniciarDetectorFalhas() throws IOException {
@@ -55,6 +57,15 @@ public class Processo {
         detectorFalhas.iniciar();
     }
 
+    private DirectedGraph<Integer, DefaultEdge> encontrarParticao() {
+        for (DirectedGraph<Integer, DefaultEdge> particao_sincrona : particoes_sincronas) {
+            if (particao_sincrona.containsVertex(id)) {
+                return particao_sincrona;
+            }
+        }
+        return null;
+    }
+
     private void preencherQoS() {
         //Processos
         qos[0][0] = TipoQos.TIMELY;
@@ -63,7 +74,7 @@ public class Processo {
         qos[3][3] = TipoQos.TIMELY;
         qos[4][4] = TipoQos.TIMELY;
         qos[5][5] = TipoQos.TIMELY;
-        
+
         //Canal(0,i)
         qos[0][1] = TipoQos.TIMELY;
         qos[0][2] = TipoQos.TIMELY;
@@ -100,7 +111,7 @@ public class Processo {
         qos[5][2] = TipoQos.UNTIMELY;
         qos[5][3] = TipoQos.TIMELY;
         qos[5][4] = TipoQos.TIMELY;
-        
+
     }
 
     public void addProcessos() {
@@ -131,5 +142,17 @@ public class Processo {
     public Consenso getConsenso() {
         return consenso;
     }
-    
+
+    public List<Integer> getProcessos() {
+        return processos;
+    }
+
+    public List<DirectedGraph<Integer, DefaultEdge>> getParticoes_sincronas() {
+        return particoes_sincronas;
+    }
+
+    public DetectorFalhas getDetectorFalhas() {
+        return detectorFalhas;
+    }
+
 }
