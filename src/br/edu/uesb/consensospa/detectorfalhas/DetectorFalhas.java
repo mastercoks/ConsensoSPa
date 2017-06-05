@@ -77,7 +77,7 @@ public class DetectorFalhas {
 
         @Override
         public Boolean call() throws InterruptedException {
-            Thread.sleep(2000 * nr);
+            Thread.sleep(1000 * nr);
 //            if (new Random().nextInt(processos.size()) == 2) {
             if (id == 0) {
                 System.err.println("Processo[" + id + "]: crash...");

@@ -5,8 +5,7 @@
  */
 package testes;
 
-import br.edu.uesb.consensospa.detectorfalhas.Processo;
-import java.io.IOException;
+import br.edu.uesb.consensospa.main.Principal;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,16 +17,12 @@ import java.util.logging.Logger;
 public class TesteConsenso {
 
     public static void main(String[] args) {
-        Processo processos[] = new Processo[6];
+        Principal processos[] = new Principal[6];
         for (int i = 0; i < processos.length; i++) {
-            try {
-                processos[i] = new Processo(i, processos.length);
-            } catch (IOException ex) {
-                Logger.getLogger(TesteDetectorFalhas.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            processos[i] = new Principal(i, processos.length);
         }
 
-        for (Processo processo : processos) {
+        for (Principal processo : processos) {
             try {
                 processo.iniciarConsenso();
             } catch (InterruptedException | ExecutionException ex) {
