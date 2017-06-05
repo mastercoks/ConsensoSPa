@@ -30,8 +30,8 @@ public class Aceitador {
     }
 
     public void iniciar() {
-        consenso.getExecutorService().execute(new T2());
-        consenso.getExecutorService().execute(new T3());
+        consenso.getProcesso().getExecutorService().execute(new T2());
+        consenso.getProcesso().getExecutorService().execute(new T3());
     }
 
     private class T2 implements Runnable {
@@ -39,17 +39,17 @@ public class Aceitador {
         @Override
         public void run() {
             try {
-                NetworkService rede = new NetworkService(8000 + consenso.getId());
+                NetworkService rede = new NetworkService(8000 + consenso.getProcesso().getId());
                 while (true) {
-                    Future<Pacote> future = consenso.getExecutorService().submit(rede);
+                    Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
                     Pacote pacote = future.get();
                     PrepararPedido mensagem_recebida = (PrepararPedido) pacote.getMensagem();
-                    System.out.println("Processo[" + consenso.getId() + "]: Pacote Recebido: " + pacote + " do o processo " + pacote.getId_origem());
+                    System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Recebido: " + pacote + " do o processo " + pacote.getId_origem());
                     if (pacote.getTipo() == TipoPacote.PREPARAR_PEDIDO && mensagem_recebida.getRodada() > consenso.maior(consenso.getRodada(), consenso.getUltima_rodada())) {
                         ConfirmacaoPrepararPedido mensagem = new ConfirmacaoPrepararPedido(mensagem_recebida.getRodada(), consenso.getRodada(), consenso.getValor());
-                        pacote = new Pacote(consenso.getId(), pacote.getId_origem(), TipoPacote.CONFIRMACAO_PREPARAR_PEDIDO, mensagem);
-                        System.out.println("Processo[" + consenso.getId() + "]: Pacote Enviando: " + pacote + " para o processo " + pacote.getId_destino());
-                        consenso.getExecutorService().execute(new Enviar(consenso.getId(), "localhost", 8100 + pacote.getId_destino(), pacote));
+                        pacote = new Pacote(consenso.getProcesso().getId(), pacote.getId_origem(), TipoPacote.CONFIRMACAO_PREPARAR_PEDIDO, mensagem);
+                        System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Enviando: " + pacote + " para o processo " + pacote.getId_destino());
+                        consenso.getProcesso().getExecutorService().execute(new Enviar(consenso.getProcesso().getId(), "localhost", 8100 + pacote.getId_destino(), pacote));
                         consenso.setUltima_rodada(mensagem_recebida.getRodada());
                     }
                 }
@@ -64,19 +64,19 @@ public class Aceitador {
         @Override
         public void run() {
             try {
-                NetworkService rede = new NetworkService(8200 + consenso.getId());
+                NetworkService rede = new NetworkService(8200 + consenso.getProcesso().getId());
                 while (true) {
-                    Future<Pacote> future = consenso.getExecutorService().submit(rede);
+                    Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
                     Pacote pacote = future.get();
                     PedidoAceito mensagem_recebida = (PedidoAceito) pacote.getMensagem();
-                    System.out.println("Processo[" + consenso.getId() + "]: Pacote Recebido: " + pacote + " do o processo " + pacote.getId_origem());
+                    System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Recebido: " + pacote + " do o processo " + pacote.getId_origem());
                     if (pacote.getTipo() == TipoPacote.PEDIDO_ACEITO && mensagem_recebida.getRodada() >= consenso.maior(consenso.getRodada(), consenso.getUltima_rodada())) {
                         consenso.setUltima_rodada(mensagem_recebida.getRodada());
                         consenso.setRodada(mensagem_recebida.getRodada());
                         consenso.setValor(mensagem_recebida.getValor());
                         consenso.setQuorum(mensagem_recebida.getQuorum());
                         ConfirmacaoPedidoAceito mensagem = new ConfirmacaoPedidoAceito(consenso.getRodada(), consenso.getValor());
-                        pacote = new Pacote(consenso.getId(), TipoPacote.CONFIRMACAO_PEDIDO_ACEITO, mensagem);
+                        pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.CONFIRMACAO_PEDIDO_ACEITO, mensagem);
                         consenso.broadcast(8300, pacote);
                     }
                 }

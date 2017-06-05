@@ -5,7 +5,7 @@
  */
 package br.edu.uesb.consensospa.consenso;
 
-import br.edu.uesb.consensospa.detectorfalhas.Eleicao;
+import br.edu.uesb.consensospa.detectorfalhas.Processo;
 import br.edu.uesb.consensospa.enumerado.TipoValor;
 import br.edu.uesb.consensospa.rede.Enviar;
 import br.edu.uesb.consensospa.rede.Pacote;
@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 /**
@@ -24,56 +23,53 @@ import java.util.concurrent.Future;
  */
 public class Consenso implements Runnable {
 
-    private final int id;
     private int rodada;
     private int ultima_rodada;
     private TipoValor valor;
     private List<Integer> quorum;
-    private final List<Integer> processos;
-    private final ExecutorService executorService;
-    private final Eleicao eleicao;
+    private final Processo processo;
 
-    public Consenso(int id, ExecutorService executorService, Eleicao eleicao) {
-        this.id = id;
+    public Consenso(Processo processo) {
+        this.processo = processo;
         this.rodada = 0;
         this.ultima_rodada = 0;
         this.valor = escolherValor();
         this.quorum = new ArrayList<>();
-        this.processos = eleicao.getProcessos();
-        this.executorService = executorService;
-        this.eleicao = eleicao;
     }
 
     public void iniciar() throws InterruptedException, ExecutionException {
         System.out.println(this);
         new Aceitador(this).iniciar();
-        getExecutorService().execute(this);
-        if (getId() == 0) { //getEleicao().isLider()
-            getExecutorService().execute(new Proponente(this));
+        processo.getExecutorService().execute(this);
+        if (processo.getId() == 0) { //getEleicao().isLider()
+            processo.getExecutorService().execute(new Proponente(this));
         }
     }
 
     @Override
     public void run() {
-        Future<TipoValor> future = getExecutorService().submit(new Aprendiz(this));
+        Future<TipoValor> future = processo.getExecutorService().submit(new Aprendiz(this));
         try {
             setValor(future.get());
         } catch (InterruptedException | ExecutionException ex) {
 //            System.err.println("error: " + ex);
         }
         System.out.println(this);
-        getExecutorService().shutdown();
+        processo.getExecutorService().shutdown();
 
     }
 
     @Override
     public String toString() {
-        return "--------------------\nProcesso[" + getId() + "]\nRodada = " + getRodada() + "\nUltimaRodada = " + getUltima_rodada() + "\nQuorum = " + getQuorum() + "\nValor = " + getValor() + "\n--------------------\n";
+        return "--------------------\nProcesso[" + processo.getId()
+                + "]\nRodada = " + getRodada() + "\nUltimaRodada = "
+                + getUltima_rodada() + "\nQuorum = " + getQuorum()
+                + "\nValor = " + getValor() + "\n--------------------\n";
     }
 
     public List<Integer> gerarQuorum() {
         List<Integer> q = new ArrayList<>();
-        getProcessos().stream().filter((processo) -> (!getEleicao().getDefeituosos().contains(processo) && getEleicao().contemVertice(processo))).forEach((processo) -> {
+        processo.getProcessos().stream().filter((processo_aux) -> (!processo.getEleicao().getDefeituosos().contains(processo_aux) && processo.getEleicao().contemVertice(processo_aux))).forEach((processo) -> {
             q.add(processo);
         });
         return q;
@@ -109,11 +105,11 @@ public class Consenso implements Runnable {
     }
 
     public void broadcast(int porta, Pacote pacote) throws IOException, UnknownHostException, ClassNotFoundException {
-        for (int processo : processos) {
-            if (processo != id) {
-                pacote.setId_destino(processo);
-                executorService.execute(new Enviar(id, "localhost", porta + processo, pacote));
-                System.out.println("Processo[" + getId() + "]: Pacote Enviado: " + pacote + " para o processo " + processo);
+        for (int processo_aux : processo.getProcessos()) {
+            if (processo_aux != processo.getId()) {
+                pacote.setId_destino(processo_aux);
+                processo.getExecutorService().execute(new Enviar(processo.getId(), "localhost", porta + processo_aux, pacote));
+                System.out.println("Processo[" + processo.getId() + "]: Pacote Enviado: " + pacote + " para o processo " + processo_aux);
             }
         }
     }
@@ -171,22 +167,6 @@ public class Consenso implements Runnable {
         this.quorum = quorum;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public ExecutorService getExecutorService() {
-        return executorService;
-    }
-
-    public List<Integer> getProcessos() {
-        return processos;
-    }
-
-    public Eleicao getEleicao() {
-        return eleicao;
-    }
-
     public boolean addQuorum(int processo) {
         return quorum.add(processo);
     }
@@ -197,5 +177,9 @@ public class Consenso implements Runnable {
 
     public boolean removeAllQuorum(List<Integer> processos) {
         return quorum.removeAll(processos);
+    }
+
+    public Processo getProcesso() {
+        return processo;
     }
 }

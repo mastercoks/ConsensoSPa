@@ -28,6 +28,7 @@ public final class Principal {
     public Principal(int id, int quant_processos) {
         this.quant_processos = quant_processos;
         this.processo = new Processo(id, quant_processos, newProcessos(), newParticoesSincronas(), newQoS());
+        this.processo.novoEleicao();
     }
 
     private boolean sortearCorreto() {

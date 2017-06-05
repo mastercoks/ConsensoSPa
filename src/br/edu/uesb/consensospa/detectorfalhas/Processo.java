@@ -7,15 +7,12 @@ package br.edu.uesb.consensospa.detectorfalhas;
 
 import br.edu.uesb.consensospa.consenso.Consenso;
 import br.edu.uesb.consensospa.enumerado.TipoQos;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.SimpleDirectedGraph;
 
 /**
  *
@@ -29,9 +26,11 @@ public class Processo {
     private List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas;
     private DetectorFalhas detectorFalhas;
     private Consenso consenso;
+    private Eleicao eleicao;
     private TipoQos[][] qos;
     private final ExecutorService executorService;
     private boolean correto;
+    private boolean crash;
 
     public Processo(int id, int quant_processos, List<Integer> processos, List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas, TipoQos[][] qos) {
         this.id = id;
@@ -40,6 +39,7 @@ public class Processo {
         this.particoes_sincronas = particoes_sincronas;
         this.qos = qos;
         this.executorService = Executors.newCachedThreadPool();
+        this.crash = false;
     }
 
     public void setCorreto(int processo_correto) {
@@ -66,6 +66,14 @@ public class Processo {
         return detectorFalhas;
     }
 
+    public int getQuant_processos() {
+        return quant_processos;
+    }
+
+    public ExecutorService getExecutorService() {
+        return executorService;
+    }
+
     public void addProcesso(int processo) {
         processos.add(processo);
     }
@@ -82,16 +90,32 @@ public class Processo {
         this.qos = qos;
     }
 
+    public void novoEleicao() {
+        eleicao = new Eleicao(id, processos, new ArrayList<>(), particoes_sincronas);
+    }
+
     public void novoConsenso() {
-        consenso = new Consenso(id, executorService, new Eleicao(id, processos, new ArrayList<>(), particoes_sincronas));
+        consenso = new Consenso(this);
     }
 
     public void novoDetectorFalhas() {
-        detectorFalhas = new DetectorFalhas(id, 9000 + id, processos, particoes_sincronas, quant_processos, qos);
+        detectorFalhas = new DetectorFalhas(this, 9000 + id);
+    }
+
+    public Eleicao getEleicao() {
+        return eleicao;
     }
 
     public int getId() {
         return id;
+    }
+
+    public boolean isCrash() {
+        return crash;
+    }
+
+    public void setCrash(boolean crash) {
+        this.crash = crash;
     }
 
 }

@@ -37,30 +37,30 @@ public class Proponente implements Runnable {
     public void run() {
         try {
             boolean aceitou = false;
-            NetworkService rede = new NetworkService(8100 + consenso.getId());
+            NetworkService rede = new NetworkService(8100 + consenso.getProcesso().getId());
             while (!aceitou) {
-                consenso.setRodada(consenso.maior(consenso.getRodada(), consenso.getUltima_rodada()) + consenso.getEleicao().getProcessos().size());
+                consenso.setRodada(consenso.maior(consenso.getRodada(), consenso.getUltima_rodada()) + consenso.getProcesso().getEleicao().getProcessos().size());
                 //Fase 1 da rodada r: Preparar pedido
                 consenso.setQuorum(consenso.gerarQuorum());
-                Pacote pacote = new Pacote(consenso.getId(), TipoPacote.PREPARAR_PEDIDO, new PrepararPedido(consenso.getRodada()));
+                Pacote pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.PREPARAR_PEDIDO, new PrepararPedido(consenso.getRodada()));
                 consenso.broadcast(8000, pacote);
-                
+
                 //Fase 2 da rodade r: Aceitar pedido
                 List<TipoValor> respostas = new ArrayList<>();
                 respostas.add(consenso.getValor());
                 int quant_confirmacoes_recebidas = 0;
                 while (true) {
-                    Future<Pacote> future = consenso.getExecutorService().submit(rede);
+                    Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
                     pacote = future.get();
                     if (pacote.getTipo() == TipoPacote.CONFIRMACAO_PREPARAR_PEDIDO) {
                         ConfirmacaoPrepararPedido mensagem_recebida = (ConfirmacaoPrepararPedido) pacote.getMensagem();
 
-                        System.out.println("Processo[" + consenso.getId() + "]: Pacote Recebido: "
+                        System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Recebido: "
                                 + pacote + " do o processo "
                                 + pacote.getId_origem() + " Quorum: " + consenso.getQuorum()
                                 + " recebidos = " + quant_confirmacoes_recebidas);
 
-                        consenso.removeAllQuorum(consenso.getEleicao().getDefeituosos()); //verificar se funciona!
+                        consenso.removeAllQuorum(consenso.getProcesso().getEleicao().getDefeituosos()); //verificar se funciona!
                         if (consenso.getQuorum().contains(pacote.getId_origem()) && consenso.getRodada() >= mensagem_recebida.getRodada_origem()) {
                             respostas.add(mensagem_recebida.getValor());
                             quant_confirmacoes_recebidas++;
@@ -68,9 +68,9 @@ public class Proponente implements Runnable {
                                 consenso.setValor(consenso.checarQuorum(respostas, 2));
                                 consenso.setQuorum(consenso.gerarQuorum());
                                 PedidoAceito mensagem = new PedidoAceito(consenso.getRodada(), consenso.getValor(), consenso.getQuorum());
-                                pacote = new Pacote(consenso.getId(), TipoPacote.PEDIDO_ACEITO, mensagem);
+                                pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.PEDIDO_ACEITO, mensagem);
                                 consenso.broadcast(8200, pacote);
-                                System.out.println("Processo[" + consenso.getId() + "]: quorum = " + respostas);
+                                System.out.println("Processo[" + consenso.getProcesso().getId() + "]: quorum = " + respostas);
                                 aceitou = true;
                                 break;
                             }
