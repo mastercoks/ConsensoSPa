@@ -4,32 +4,24 @@ import br.edu.uesb.consensospa.enumerado.TipoPacote;
 import br.edu.uesb.consensospa.enumerado.TipoQos;
 import br.edu.uesb.consensospa.rede.Enviar;
 import br.edu.uesb.consensospa.rede.Pacote;
+import br.edu.uesb.consensospa.rede.Receber;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
 
 public class DetectorFalhas {
 
-    private Processo processo;
-    private int porta;
-    private List<Integer> defeituosos;
+    private final Processo processo;
+    private final int porta;
+    private final List<Integer> defeituosos;
     private long[] timeout;
     private Future<Boolean> future;
     private boolean primeira_rodada;
-    private int nr;
+    private final int nr;
 
     public DetectorFalhas(Processo processo, int porta) {
         this.processo = processo;
@@ -37,13 +29,13 @@ public class DetectorFalhas {
         this.defeituosos = new ArrayList<>();
         this.timeout = new long[processo.getQuant_processos()];
         this.primeira_rodada = true;
-        this.nr = new Random().nextInt(10);
+        this.nr = new Random().nextInt(5);
         iniciarTimeouts();
     }
 
     public void iniciar() throws IOException {
         future = processo.getExecutorService().submit(new Crash());
-        processo.getExecutorService().execute(new Receber(processo.getId(), porta, timeout));
+        processo.getExecutorService().execute(new Receber(this, porta));
         processo.getExecutorService().execute(new T1());
         processo.getExecutorService().execute(new T2());
     }
@@ -63,6 +55,14 @@ public class DetectorFalhas {
         return t;
     }
 
+    public boolean removeDefeituoso(Integer processo) {
+        return defeituosos.remove(processo);
+    }
+
+    public void addDefeituoso(Integer processo) {
+        defeituosos.add(processo);
+    }
+
     public class Crash implements Callable<Boolean> {
 
         @Override
@@ -70,9 +70,9 @@ public class DetectorFalhas {
 //            if(!processo.isCorreto()) {
 //                
 //            }
-            Thread.sleep(1000 * nr);
-//            if (new Random().nextInt(processos.size()) == 2) {
-            if (processo.getId() == 0) {
+            Thread.sleep(1100);
+            if (!processo.isCorreto() && new Random().nextInt(3) == 0) {
+//            if (processo.getId() == 0) {
                 System.err.println("Processo[" + processo.getId() + "]: crash...");
                 return true;
             } else {
@@ -88,11 +88,11 @@ public class DetectorFalhas {
         public void run() {
             try {
                 while (true) {
-                    Thread.sleep(1500);
+                    Thread.sleep(1000);
                     if (!processo.isCrash()) {
                         for (int processo_aux : processo.getProcessos()) {
                             if (processo_aux != processo.getId()) {
-                                timeout[processo_aux] = System.currentTimeMillis() + 1000;   //Tempo atual + delay
+                                timeout[processo_aux] = System.currentTimeMillis() + 900;   //Tempo atual + delay
                                 processo.getExecutorService().execute(new Enviar(processo.getId(), "localhost", 9000 + processo_aux, new Pacote(processo.getId(), processo_aux, TipoPacote.VOCE_ESTA_VIVO)));
 
                             }
@@ -165,83 +165,24 @@ public class DetectorFalhas {
 
     }
 
-    public class Receber implements Runnable {
+    public Processo getProcesso() {
+        return processo;
+    }
 
-        private final int id;
-        private final ServerSocket servidor;
-        private Socket cliente;
-        private Pacote pacote;
-        private long[] timeout;
+    public long[] getTimeout() {
+        return timeout;
+    }
 
-        public Receber(int id, int porta, long[] timeout) throws IOException {
-            this.id = id;
-            this.timeout = timeout;
-            servidor = new ServerSocket(porta);
-            System.out.println("Servidor aberto na porta: " + servidor.getLocalPort());
-        }
+    public List<Integer> getDefeituosos() {
+        return defeituosos;
+    }
 
-        public Receber(int id, int porta) throws IOException {
-            this.id = id;
-            servidor = new ServerSocket(porta);
-            System.out.println("Servidor aberto na porta: " + servidor.getLocalPort());
-        }
+    public int getNr() {
+        return nr;
+    }
 
-        @Override
-        public void run() {
-            while (true) {
-                try {
-                    if (!processo.isCrash()) {
-                        cliente = servidor.accept();
-                        ObjectInputStream entrada = new ObjectInputStream(cliente.getInputStream());
-//                    origem = 9000 + id_origem;
-                        pacote = (Pacote) entrada.readObject();
-//                    System.out.println("Processo[" + id + "]: " + "Pacote Recebido: " + pacote.getTipo() + " Origem: " + (origem));
-                        switch (pacote.getTipo()) {
-                            case EU_ESTOU_VIVO: //T3
-                                timeout[pacote.getId_origem()] = Long.MAX_VALUE;   //Cancela o Timeout
-                                if (defeituosos.contains(pacote.getId_origem())) {
-                                    if (defeituosos.remove((Integer) pacote.getId_origem())) {
-                                        System.out.println("Processo[" + id + "]: Processo " + pacote.getId_origem() + " removido dos processos defeituosos!");
-                                    }
-                                }
-                                break;
-                            case NOTIFICACAO: //T4
-                                int processo_aux = (Integer) pacote.getMensagem();
-                                if (!defeituosos.contains(processo_aux) && !defeituosos.contains((Integer) pacote.getId_origem())) {
-                                    defeituosos.add((Integer) pacote.getMensagem());
-                                    // Observação: Eu alterei a estrutura do algoritmo, verificar com o professor!
-                                    if ((Integer) pacote.getMensagem() == processo.getEleicao().getLider()) {
-                                        processo.getEleicao().novoLider();
-                                    }
-                                    // FimObservação
-                                }
-                                break;
-                            case VOCE_ESTA_VIVO: //T5
-                                new Thread(new Enviar(id, "localhost", 9000 + pacote.getId_origem(), new Pacote(id, pacote.getId_origem(), TipoPacote.EU_ESTOU_VIVO))).start();
-                                break;
-                        }
-                        cliente.close();
-                    } else {
-                        Thread.sleep(2000 * nr);
-                        processo.setCrash(false);
-                    }
-                } catch (IOException | ClassNotFoundException ex) {
-                    System.err.println("Processo[" + id + "]: Erro no recebimento: " + ex);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(DetectorFalhas.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
-            }
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public Pacote getPacote() {
-            return pacote;
-        }
-
+    public void setTimeout(long[] timeout) {
+        this.timeout = timeout;
     }
 
 }

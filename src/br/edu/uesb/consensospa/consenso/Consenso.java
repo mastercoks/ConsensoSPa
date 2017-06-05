@@ -41,6 +41,10 @@ public class Consenso implements Runnable {
         System.out.println(this);
         new Aceitador(this).iniciar();
         processo.getExecutorService().execute(this);
+        T1();
+    }
+
+    public void T1() {
         if (processo.getId() == 0) { //getEleicao().isLider()
             processo.getExecutorService().execute(new Proponente(this));
         }
@@ -55,7 +59,7 @@ public class Consenso implements Runnable {
 //            System.err.println("error: " + ex);
         }
         System.out.println(this);
-        processo.getExecutorService().shutdown();
+//        processo.getExecutorService().shutdown();
 
     }
 
@@ -64,7 +68,8 @@ public class Consenso implements Runnable {
         return "--------------------\nProcesso[" + processo.getId()
                 + "]\nRodada = " + getRodada() + "\nUltimaRodada = "
                 + getUltima_rodada() + "\nQuorum = " + getQuorum()
-                + "\nValor = " + getValor() + "\n--------------------\n";
+                + "\nValor = " + getValor() + "\nCorreto = "
+                + processo.isCorreto() + "\n--------------------\n";
     }
 
     public List<Integer> gerarQuorum() {
@@ -75,7 +80,7 @@ public class Consenso implements Runnable {
         return q;
     }
 
-    public TipoValor checarQuorum(List<TipoValor> respostas, int k) {
+    public TipoValor checarQuorum(List<TipoValor> respostas, int quorum) {
         int quant_sw = 0, quant_st = 0, quant_n = 0;
         for (TipoValor resposta : respostas) {
             switch (resposta) {
@@ -92,7 +97,7 @@ public class Consenso implements Runnable {
         }
         int maior_quant = maior(quant_sw, maior(quant_st, quant_n));
         TipoValor valor_tmp = null;
-        if (maior_quant >= k) {
+        if (maior_quant >= quorum) {
             if (maior_quant == quant_sw) {
                 valor_tmp = TipoValor.STAR_WARS;
             } else if (maior_quant == quant_st) {
@@ -122,7 +127,7 @@ public class Consenso implements Runnable {
         }
     }
 
-    private TipoValor escolherValor() {
+    public TipoValor escolherValor() {
         int num_rand = new Random().nextInt(3);
         switch (num_rand) {
             case 0:

@@ -39,22 +39,20 @@ public final class Principal {
 
     }
 
-    private List<Integer> encontrarParticao() {
+    public List<Integer> encontrarParticao() {
         List<Integer> processos_particao = new ArrayList<>();
-        for (DirectedGraph<Integer, DefaultEdge> particao_sincrona : processo.getParticoes_sincronas()) {
-            if (particao_sincrona.containsVertex(processo.getId())) {
-                for (Integer processo : processo.getProcessos()) {
-                    if (particao_sincrona.containsVertex(processo)) {
-                        processos_particao.add(processo);
-                    }
-                }
-            }
-        }
+        processo.getParticoes_sincronas().stream().filter((particao_sincrona) -> (particao_sincrona.containsVertex(processo.getId()))).forEach((particao_sincrona) -> {
+            processo.getProcessos().stream().filter((processo_aux) -> (particao_sincrona.containsVertex(processo_aux))).forEach((processo_aux) -> {
+                processos_particao.add(processo_aux);
+            });
+        });
         return processos_particao;
     }
 
     public void iniciar() throws IOException, InterruptedException, ExecutionException {
         boolean correto = sortearCorreto();
+        iniciarDetectorFalhas();
+        iniciarConsenso();
 //        detectorFalhas = new DetectorFalhas(id, 9000 + id, processos, particoes_sincronas, quant_processos, qos);
 //        consenso = new Consenso(id, executorService, detectorFalhas.getEleicao());
 //        consenso.iniciar();
@@ -149,6 +147,10 @@ public final class Principal {
         return qos;
     }
 
+    public Processo getProcesso() {
+        return processo;
+    }
+
     public static void main(String[] args) {
         Principal processos[] = new Principal[6];
         Integer processo_correto = null;
@@ -163,8 +165,13 @@ public final class Principal {
             processos[i].processo.setCorreto(processo_correto);
         }
         for (Principal processo : processos) {
-
-            System.out.println("Processo[" + processo.processo.getId() + "] : " + processo.processo.isCorreto());
+            try {
+                processo.iniciar();
+                System.out.println("Processo[" + processo.processo.getId() + "] : " + processo.processo.isCorreto());
+            } catch (IOException | InterruptedException | ExecutionException ex) {
+                System.err.println("Erro --");
+//                Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 

@@ -41,6 +41,7 @@ public class Aceitador {
             try {
                 NetworkService rede = new NetworkService(8000 + consenso.getProcesso().getId());
                 while (true) {
+                    consenso.setValor(consenso.escolherValor());
                     Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
                     Pacote pacote = future.get();
                     PrepararPedido mensagem_recebida = (PrepararPedido) pacote.getMensagem();

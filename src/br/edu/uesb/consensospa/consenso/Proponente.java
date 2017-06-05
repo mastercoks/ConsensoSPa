@@ -17,8 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -36,9 +34,10 @@ public class Proponente implements Runnable {
     @Override
     public void run() {
         try {
+            Thread.sleep(2000);
             boolean aceitou = false;
             NetworkService rede = new NetworkService(8100 + consenso.getProcesso().getId());
-            while (!aceitou) {
+            while (!aceitou || consenso.getProcesso().isCrash()) {
                 consenso.setRodada(consenso.maior(consenso.getRodada(), consenso.getUltima_rodada()) + consenso.getProcesso().getEleicao().getProcessos().size());
                 //Fase 1 da rodada r: Preparar pedido
                 consenso.setQuorum(consenso.gerarQuorum());
@@ -52,6 +51,7 @@ public class Proponente implements Runnable {
                 while (true) {
                     Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
                     pacote = future.get();
+                    Thread.sleep(500);
                     if (pacote.getTipo() == TipoPacote.CONFIRMACAO_PREPARAR_PEDIDO) {
                         ConfirmacaoPrepararPedido mensagem_recebida = (ConfirmacaoPrepararPedido) pacote.getMensagem();
 
@@ -65,42 +65,26 @@ public class Proponente implements Runnable {
                             respostas.add(mensagem_recebida.getValor());
                             quant_confirmacoes_recebidas++;
                             if (quant_confirmacoes_recebidas == consenso.getQuorum().size() - 1) {
-                                consenso.setValor(consenso.checarQuorum(respostas, 2));
-                                consenso.setQuorum(consenso.gerarQuorum());
-                                PedidoAceito mensagem = new PedidoAceito(consenso.getRodada(), consenso.getValor(), consenso.getQuorum());
-                                pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.PEDIDO_ACEITO, mensagem);
-                                consenso.broadcast(8200, pacote);
+                                TipoValor valor = consenso.checarQuorum(respostas, ((consenso.getQuorum().size() / 2) + 1));
                                 System.out.println("Processo[" + consenso.getProcesso().getId() + "]: quorum = " + respostas);
-                                aceitou = true;
+                                if (valor != null) {
+                                    consenso.setValor(valor);
+                                    consenso.setQuorum(consenso.gerarQuorum());
+                                    PedidoAceito mensagem = new PedidoAceito(consenso.getRodada(), consenso.getValor(), consenso.getQuorum());
+                                    pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.PEDIDO_ACEITO, mensagem);
+                                    consenso.broadcast(8200, pacote);
+
+                                    aceitou = true;
+                                }
                                 break;
                             }
                         }
                     }
                 }
-
-                //Fase 2 da rodada r: Aceitar pedido
-//                int quorum = 1;
-//                List<TipoValor> respostas = new ArrayList<>();
-//                respostas.add(getValor());
-//                while (quorum < ((getQuorum().size() / 2) + 1) || getQuorum().size() == respostas.size()) {
-//                    Future<Pacote> future = getExecutorService().submit(new NetworkService(8100 + getId()));
-//                    pacote = future.get();
-//                    setQuorum(gerarQuorum());
-//                    ConfirmacaoPrepararPedido mensagem_recebida = (ConfirmacaoPrepararPedido) pacote.getMensagem();
-//                    respostas.add(mensagem_recebida.getValor());
-//                    quorum = checarQuorum(respostas);
-//                }
-//                if (pacote.getTipo() == TipoPacote.CONFIRMACAO_PREPARAR_PEDIDO) {
-////                    setValor(); //
-//                    setQuorum(gerarQuorum());
-//                    pacote = new Pacote(getId(), TipoPacote.PEDIDO_ACEITO, new PedidoAceito(getRodada(), getValor(), getQuorum()));
-//                    broadcast(8100, pacote);
-//                    aceitou = true;
-//                }
             }
             rede.fecharServidor();
         } catch (IOException | InterruptedException | ExecutionException | ClassNotFoundException ex) {
-            Logger.getLogger(Proponente.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.println("Erro no Propenente: " + ex);
         }
     }
 

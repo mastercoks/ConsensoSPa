@@ -27,6 +27,7 @@ public class Aprendiz implements Callable<TipoValor> {
         while (true) {
             Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
             Pacote pacote = future.get();
+            Thread.sleep(500);
             if (pacote.getTipo() == TipoPacote.CONFIRMACAO_PEDIDO_ACEITO) {
                 ConfirmacaoPedidoAceito mensagem_recebida = (ConfirmacaoPedidoAceito) pacote.getMensagem();
 
