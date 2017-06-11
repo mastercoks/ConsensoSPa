@@ -67,10 +67,7 @@ public class DetectorFalhas {
 
         @Override
         public Boolean call() throws InterruptedException {
-//            if(!processo.isCorreto()) {
-//                
-//            }
-            Thread.sleep(1100);
+            Thread.sleep(1000);
             if (!processo.isCorreto() && new Random().nextInt(3) == 0) {
 //            if (processo.getId() == 0) {
                 System.err.println("Processo[" + processo.getId() + "]: crash...");
@@ -97,7 +94,10 @@ public class DetectorFalhas {
 
                             }
                         }
-                        System.out.println("Processo[" + processo.getId() + "]: Lider: " + processo.getEleicao().getLider() + " Defeituosos: " + defeituosos);
+                        /*
+                        System.out.println("Processo[" + processo.getId() + "]: Lider: "
+                                + processo.getEleicao().getLider() + " Defeituosos: " + defeituosos);
+                        */
                     } else {
                         Thread.sleep(2000 * nr);
                         processo.setCrash(false);
@@ -132,10 +132,10 @@ public class DetectorFalhas {
                                     for (int processox : processo.getProcessos()) {
                                         if (processox != processo.getId() && processox != processoj) {
                                             processo.getExecutorService().execute(new Enviar(processo.getId(), "localhost", 9000 + processox, new Pacote(processo.getId(), processox, TipoPacote.NOTIFICACAO, processoj)));
+                                            /*
                                             System.out.println("Processo[" + processo.getId() + "]: Notificação enviada para o processo "
-                                                    + processox + " que o processo " + processoj + " falhou. Timeout: "
-                                                    + tempo_atual + " Timeouts: " + getTimeouts());
-
+                                                    + processox + " que o processo " + processoj + " falhou.");
+                                             */
                                         }
                                     }
                                     if (processoj == processo.getEleicao().getLider()) {

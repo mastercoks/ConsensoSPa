@@ -6,6 +6,7 @@
 package testes;
 
 import br.edu.uesb.consensospa.main.Principal;
+import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -18,7 +19,7 @@ import java.util.logging.Logger;
  */
 public class TesteConsenso {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Principal processos[] = new Principal[6];
         Integer processo_correto = null;
         for (int i = 0; i < processos.length; i++) {

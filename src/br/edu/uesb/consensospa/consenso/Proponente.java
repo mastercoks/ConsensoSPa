@@ -24,7 +24,6 @@ import java.util.concurrent.Future;
  */
 public class Proponente implements Runnable {
 
-//    private final List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas;
     private final Consenso consenso;
 
     public Proponente(Consenso consenso) {
@@ -37,8 +36,11 @@ public class Proponente implements Runnable {
             Thread.sleep(2000);
             boolean aceitou = false;
             NetworkService rede = new NetworkService(8100 + consenso.getProcesso().getId());
-            while (!aceitou || consenso.getProcesso().isCrash()) {
-                consenso.setRodada(consenso.maior(consenso.getRodada(), consenso.getUltima_rodada()) + consenso.getProcesso().getEleicao().getProcessos().size());
+            while (!aceitou && !consenso.getProcesso().isCrash()) {
+                System.out.println("--------------- Rodada " + (consenso.getRodada() / consenso.getProcesso().getQuant_processos() + 1)
+                        + " ---------------" + consenso.getDetectorFalhas().getDefeituosos());
+                consenso.setRodada(consenso.maior(consenso.getRodada(), consenso.getUltima_rodada())
+                        + consenso.getProcesso().getEleicao().getProcessos().size());
                 //Fase 1 da rodada r: Preparar pedido
                 consenso.setQuorum(consenso.gerarQuorum());
                 Pacote pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.PREPARAR_PEDIDO, new PrepararPedido(consenso.getRodada()));
@@ -46,9 +48,11 @@ public class Proponente implements Runnable {
 
                 //Fase 2 da rodade r: Aceitar pedido
                 List<TipoValor> respostas = new ArrayList<>();
+                consenso.setValor(consenso.escolherValor());
+                System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Valor proposto: " + consenso.getValor());
                 respostas.add(consenso.getValor());
                 int quant_confirmacoes_recebidas = 0;
-                while (true) {
+                while (!consenso.getProcesso().isCrash()) {
                     Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
                     pacote = future.get();
                     Thread.sleep(500);
@@ -60,7 +64,7 @@ public class Proponente implements Runnable {
                                 + pacote.getId_origem() + " Quorum: " + consenso.getQuorum()
                                 + " recebidos = " + quant_confirmacoes_recebidas);
 
-                        consenso.removeAllQuorum(consenso.getProcesso().getEleicao().getDefeituosos()); //verificar se funciona!
+                        consenso.removeAllQuorum(consenso.getDetectorFalhas().getDefeituosos()); //verificar se funciona!
                         if (consenso.getQuorum().contains(pacote.getId_origem()) && consenso.getRodada() >= mensagem_recebida.getRodada_origem()) {
                             respostas.add(mensagem_recebida.getValor());
                             quant_confirmacoes_recebidas++;

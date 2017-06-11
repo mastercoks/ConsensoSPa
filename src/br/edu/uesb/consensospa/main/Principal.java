@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -49,17 +51,7 @@ public final class Principal {
         return processos_particao;
     }
 
-    public void iniciar() throws IOException, InterruptedException, ExecutionException {
-        boolean correto = sortearCorreto();
-        iniciarDetectorFalhas();
-        iniciarConsenso();
-//        detectorFalhas = new DetectorFalhas(id, 9000 + id, processos, particoes_sincronas, quant_processos, qos);
-//        consenso = new Consenso(id, executorService, detectorFalhas.getEleicao());
-//        consenso.iniciar();
-//        detectorFalhas.iniciar();
-    }
-
-    public void iniciarConsenso() throws InterruptedException, ExecutionException {
+    public void iniciarConsenso() throws InterruptedException, ExecutionException, IOException {
         processo.novoConsenso();
         processo.getConsenso().iniciar();
     }
@@ -151,26 +143,23 @@ public final class Principal {
         return processo;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Principal processos[] = new Principal[6];
         Integer processo_correto = null;
-
         for (int i = 0; i < processos.length; i++) {
-
             processos[i] = new Principal(i, processos.length);
             if (i == 0 || i == 3) {
                 List<Integer> processos_particao = processos[i].encontrarParticao();
                 processo_correto = processos_particao.get(new Random().nextInt(processos_particao.size()));
             }
-            processos[i].processo.setCorreto(processo_correto);
+            processos[i].getProcesso().setCorreto(processo_correto);
         }
+
         for (Principal processo : processos) {
             try {
-                processo.iniciar();
-                System.out.println("Processo[" + processo.processo.getId() + "] : " + processo.processo.isCorreto());
-            } catch (IOException | InterruptedException | ExecutionException ex) {
-                System.err.println("Erro --");
-//                Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
+                processo.iniciarConsenso();
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }

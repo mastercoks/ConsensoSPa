@@ -5,6 +5,7 @@
  */
 package br.edu.uesb.consensospa.consenso;
 
+import br.edu.uesb.consensospa.detectorfalhas.DetectorFalhas;
 import br.edu.uesb.consensospa.detectorfalhas.Processo;
 import br.edu.uesb.consensospa.enumerado.TipoValor;
 import br.edu.uesb.consensospa.rede.Enviar;
@@ -28,25 +29,43 @@ public class Consenso implements Runnable {
     private TipoValor valor;
     private List<Integer> quorum;
     private final Processo processo;
+    private final DetectorFalhas detectorFalhas;
 
     public Consenso(Processo processo) {
         this.processo = processo;
         this.rodada = 0;
         this.ultima_rodada = 0;
-        this.valor = escolherValor();
+        this.valor = null;
         this.quorum = new ArrayList<>();
+        detectorFalhas = new DetectorFalhas(processo, 9000 + processo.getId());
     }
 
-    public void iniciar() throws InterruptedException, ExecutionException {
+    public void iniciar() throws InterruptedException, ExecutionException, IOException {
+        detectorFalhas.iniciar();
         System.out.println(this);
         new Aceitador(this).iniciar();
         processo.getExecutorService().execute(this);
-        T1();
+        processo.getExecutorService().execute(new T1(this));
     }
 
-    public void T1() {
-        if (processo.getId() == 0) { //getEleicao().isLider()
-            processo.getExecutorService().execute(new Proponente(this));
+    private class T1 implements Runnable {
+
+        private final Consenso consenso;
+
+        public T1(Consenso consenso) {
+            this.consenso = consenso;
+        }
+
+        @Override
+        @SuppressWarnings("empty-statement")
+        public void run() {
+            Proponente proponente = new Proponente(consenso);
+            while (consenso.getProcesso().getId() != consenso.getProcesso().getEleicao().getLider()) {
+                System.out.print("");
+            }
+            if (consenso.getProcesso().getId() == consenso.getProcesso().getEleicao().getLider()) { //getEleicao().isLider()
+                consenso.getProcesso().getExecutorService().execute(new Proponente(consenso));
+            }
         }
     }
 
@@ -56,11 +75,9 @@ public class Consenso implements Runnable {
         try {
             setValor(future.get());
         } catch (InterruptedException | ExecutionException ex) {
-//            System.err.println("error: " + ex);
         }
         System.out.println(this);
 //        processo.getExecutorService().shutdown();
-
     }
 
     @Override
@@ -73,10 +90,13 @@ public class Consenso implements Runnable {
     }
 
     public List<Integer> gerarQuorum() {
+
         List<Integer> q = new ArrayList<>();
-        processo.getProcessos().stream().filter((processo_aux) -> (!processo.getEleicao().getDefeituosos().contains(processo_aux) && processo.getEleicao().contemVertice(processo_aux))).forEach((processo) -> {
-            q.add(processo);
-        });
+        for (Integer processo_aux : processo.getProcessos()) {
+            if (!detectorFalhas.getDefeituosos().contains(processo_aux)) {
+                q.add(processo_aux);
+            }
+        }
         return q;
     }
 
@@ -186,5 +206,9 @@ public class Consenso implements Runnable {
 
     public Processo getProcesso() {
         return processo;
+    }
+
+    public DetectorFalhas getDetectorFalhas() {
+        return detectorFalhas;
     }
 }

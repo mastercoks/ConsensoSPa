@@ -41,17 +41,20 @@ public class Aceitador {
             try {
                 NetworkService rede = new NetworkService(8000 + consenso.getProcesso().getId());
                 while (true) {
-                    consenso.setValor(consenso.escolherValor());
-                    Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
-                    Pacote pacote = future.get();
-                    PrepararPedido mensagem_recebida = (PrepararPedido) pacote.getMensagem();
-                    System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Recebido: " + pacote + " do o processo " + pacote.getId_origem());
-                    if (pacote.getTipo() == TipoPacote.PREPARAR_PEDIDO && mensagem_recebida.getRodada() > consenso.maior(consenso.getRodada(), consenso.getUltima_rodada())) {
-                        ConfirmacaoPrepararPedido mensagem = new ConfirmacaoPrepararPedido(mensagem_recebida.getRodada(), consenso.getRodada(), consenso.getValor());
-                        pacote = new Pacote(consenso.getProcesso().getId(), pacote.getId_origem(), TipoPacote.CONFIRMACAO_PREPARAR_PEDIDO, mensagem);
-                        System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Enviando: " + pacote + " para o processo " + pacote.getId_destino());
-                        consenso.getProcesso().getExecutorService().execute(new Enviar(consenso.getProcesso().getId(), "localhost", 8100 + pacote.getId_destino(), pacote));
-                        consenso.setUltima_rodada(mensagem_recebida.getRodada());
+                    if (!consenso.getProcesso().isCrash()) {
+                        consenso.setValor(consenso.escolherValor());
+                        System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Valor proposto: " + consenso.getValor());
+                        Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
+                        Pacote pacote = future.get();
+                        PrepararPedido mensagem_recebida = (PrepararPedido) pacote.getMensagem();
+                        System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Recebido: " + pacote + " do o processo " + pacote.getId_origem());
+                        if (pacote.getTipo() == TipoPacote.PREPARAR_PEDIDO && mensagem_recebida.getRodada() > consenso.maior(consenso.getRodada(), consenso.getUltima_rodada())) {
+                            ConfirmacaoPrepararPedido mensagem = new ConfirmacaoPrepararPedido(mensagem_recebida.getRodada(), consenso.getRodada(), consenso.getValor());
+                            pacote = new Pacote(consenso.getProcesso().getId(), pacote.getId_origem(), TipoPacote.CONFIRMACAO_PREPARAR_PEDIDO, mensagem);
+                            System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Enviando: " + pacote + " para o processo " + pacote.getId_destino());
+                            consenso.getProcesso().getExecutorService().execute(new Enviar(consenso.getProcesso().getId(), "localhost", 8100 + pacote.getId_destino(), pacote));
+                            consenso.setUltima_rodada(mensagem_recebida.getRodada());
+                        }
                     }
                 }
             } catch (IOException | InterruptedException | ExecutionException | ClassNotFoundException ex) {
@@ -67,18 +70,20 @@ public class Aceitador {
             try {
                 NetworkService rede = new NetworkService(8200 + consenso.getProcesso().getId());
                 while (true) {
-                    Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
-                    Pacote pacote = future.get();
-                    PedidoAceito mensagem_recebida = (PedidoAceito) pacote.getMensagem();
-                    System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Recebido: " + pacote + " do o processo " + pacote.getId_origem());
-                    if (pacote.getTipo() == TipoPacote.PEDIDO_ACEITO && mensagem_recebida.getRodada() >= consenso.maior(consenso.getRodada(), consenso.getUltima_rodada())) {
-                        consenso.setUltima_rodada(mensagem_recebida.getRodada());
-                        consenso.setRodada(mensagem_recebida.getRodada());
-                        consenso.setValor(mensagem_recebida.getValor());
-                        consenso.setQuorum(mensagem_recebida.getQuorum());
-                        ConfirmacaoPedidoAceito mensagem = new ConfirmacaoPedidoAceito(consenso.getRodada(), consenso.getValor());
-                        pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.CONFIRMACAO_PEDIDO_ACEITO, mensagem);
-                        consenso.broadcast(8300, pacote);
+                    if (!consenso.getProcesso().isCrash()) {
+                        Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
+                        Pacote pacote = future.get();
+                        PedidoAceito mensagem_recebida = (PedidoAceito) pacote.getMensagem();
+                        System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Recebido: " + pacote + " do o processo " + pacote.getId_origem());
+                        if (pacote.getTipo() == TipoPacote.PEDIDO_ACEITO && mensagem_recebida.getRodada() >= consenso.maior(consenso.getRodada(), consenso.getUltima_rodada())) {
+                            consenso.setUltima_rodada(mensagem_recebida.getRodada());
+                            consenso.setRodada(mensagem_recebida.getRodada());
+                            consenso.setValor(mensagem_recebida.getValor());
+                            consenso.setQuorum(mensagem_recebida.getQuorum());
+                            ConfirmacaoPedidoAceito mensagem = new ConfirmacaoPedidoAceito(consenso.getRodada(), consenso.getValor());
+                            pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.CONFIRMACAO_PEDIDO_ACEITO, mensagem);
+                            consenso.broadcast(8300, pacote);
+                        }
                     }
                 }
             } catch (IOException | InterruptedException | ExecutionException | ClassNotFoundException ex) {

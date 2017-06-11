@@ -20,6 +20,8 @@ import org.jgrapht.DirectedGraph;
  */
 public class Processo {
 
+    public static int[] MUTEX = {0, 0, 0, 0, 0, 0};
+
     private final int id;
     private final int quant_processos;
     private final List<Integer> processos;
@@ -110,12 +112,16 @@ public class Processo {
         return id;
     }
 
+    @SuppressWarnings("empty-statement")
     public boolean isCrash() {
+        while (MUTEX[getId()] == 1);
         return crash;
     }
 
     public void setCrash(boolean crash) {
+        MUTEX[getId()] = 1;
         this.crash = crash;
+        MUTEX[getId()] = 0;
     }
 
 }
