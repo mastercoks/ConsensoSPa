@@ -22,12 +22,12 @@ import org.jgrapht.graph.SimpleDirectedGraph;
  *
  * @author Matheus
  */
-public final class Principal {
+public final class Principal6Processos {
 
     public int quant_processos;
     private final Processo processo;
 
-    public Principal(int id, int quant_processos) {
+    public Principal6Processos(int id, int quant_processos) {
         this.quant_processos = quant_processos;
         this.processo = new Processo(id, quant_processos, newProcessos(), newParticoesSincronas(), newQoS());
         this.processo.novoEleicao();
@@ -57,8 +57,9 @@ public final class Principal {
     }
 
     public void iniciarDetectorFalhas() throws IOException {
-        processo.novoDetectorFalhas();
-        processo.getDetectorFalhas().iniciar();
+        processo.novoConsenso();
+        processo.getConsenso().novoDetectorFalhas();
+        processo.getConsenso().getDetectorFalhas().iniciar();
     }
 
     private List<Integer> newProcessos() {
@@ -90,52 +91,20 @@ public final class Principal {
         return particoes_sincronas;
     }
 
-    private TipoQos[][] newQoS() {
+    public TipoQos[][] newQoS() {
         //Processos
         TipoQos[][] qos = new TipoQos[quant_processos][quant_processos];
-        qos[0][0] = TipoQos.TIMELY;
-        qos[1][1] = TipoQos.TIMELY;
-        qos[2][2] = TipoQos.TIMELY;
-        qos[3][3] = TipoQos.TIMELY;
-        qos[4][4] = TipoQos.TIMELY;
-        qos[5][5] = TipoQos.TIMELY;
-
-        //Canal(0,i)
-        qos[0][1] = TipoQos.TIMELY;
-        qos[0][2] = TipoQos.TIMELY;
-        qos[0][3] = TipoQos.UNTIMELY;
-        qos[0][4] = TipoQos.UNTIMELY;
-        qos[0][5] = TipoQos.UNTIMELY;
-        //Canal(1,i)
-        qos[1][0] = TipoQos.TIMELY;
-        qos[1][2] = TipoQos.TIMELY;
-        qos[1][3] = TipoQos.UNTIMELY;
-        qos[1][4] = TipoQos.UNTIMELY;
-        qos[1][5] = TipoQos.UNTIMELY;
-        //Canal(2,i)
-        qos[2][0] = TipoQos.TIMELY;
-        qos[2][1] = TipoQos.TIMELY;
-        qos[2][3] = TipoQos.UNTIMELY;
-        qos[2][4] = TipoQos.UNTIMELY;
-        qos[2][5] = TipoQos.UNTIMELY;
-        //Canal(3,i)
-        qos[3][0] = TipoQos.UNTIMELY;
-        qos[3][1] = TipoQos.UNTIMELY;
-        qos[3][2] = TipoQos.UNTIMELY;
-        qos[3][4] = TipoQos.TIMELY;
-        qos[3][5] = TipoQos.TIMELY;
-        //Canal(4,i)
-        qos[4][0] = TipoQos.UNTIMELY;
-        qos[4][1] = TipoQos.UNTIMELY;
-        qos[4][2] = TipoQos.UNTIMELY;
-        qos[4][3] = TipoQos.TIMELY;
-        qos[4][5] = TipoQos.TIMELY;
-        //Canal(5,i)
-        qos[5][0] = TipoQos.UNTIMELY;
-        qos[5][1] = TipoQos.UNTIMELY;
-        qos[5][2] = TipoQos.UNTIMELY;
-        qos[5][3] = TipoQos.TIMELY;
-        qos[5][4] = TipoQos.TIMELY;
+        for (int i = 0; i < quant_processos; i++) {
+            for (int j = 0; j < quant_processos; j++) {
+                if (i >= 0 && i < 3 && j >= 0 && j < 3) {
+                    qos[i][j] = TipoQos.TIMELY;
+                } else if (i >= 3 && i < 6 && j >= 3 && j < 6) {
+                    qos[i][j] = TipoQos.TIMELY;
+                } else {
+                    qos[i][j] = TipoQos.UNTIMELY;
+                }
+            }
+        }
         return qos;
     }
 
@@ -143,23 +112,24 @@ public final class Principal {
         return processo;
     }
 
-    public static void main(String[] args) throws IOException {
-        Principal processos[] = new Principal[6];
+    public static void main(String[] args) {
+        Principal6Processos processos[] = new Principal6Processos[6];
         Integer processo_correto = null;
         for (int i = 0; i < processos.length; i++) {
-            processos[i] = new Principal(i, processos.length);
+            processos[i] = new Principal6Processos(i, processos.length);
             if (i == 0 || i == 3) {
                 List<Integer> processos_particao = processos[i].encontrarParticao();
                 processo_correto = processos_particao.get(new Random().nextInt(processos_particao.size()));
             }
             processos[i].getProcesso().setCorreto(processo_correto);
+//            System.out.println(processo_correto);
         }
 
-        for (Principal processo : processos) {
+        for (Principal6Processos processo : processos) {
             try {
                 processo.iniciarConsenso();
-            } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (InterruptedException | ExecutionException | IOException ex) {
+                Logger.getLogger(Principal6Processos.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }

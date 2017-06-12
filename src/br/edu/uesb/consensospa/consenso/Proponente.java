@@ -34,13 +34,13 @@ public class Proponente implements Runnable {
     public void run() {
         try {
             Thread.sleep(2000);
-            boolean aceitou = false;
+//            boolean aceitou = false;
             NetworkService rede = new NetworkService(8100 + consenso.getProcesso().getId());
-            while (!aceitou && !consenso.getProcesso().isCrash()) {
+            while (!consenso.getProcesso().isAceitou() && !consenso.getProcesso().isCrash()) {
                 System.out.println("--------------- Rodada " + (consenso.getRodada() / consenso.getProcesso().getQuant_processos() + 1)
-                        + " ---------------" + consenso.getDetectorFalhas().getDefeituosos());
+                        + " ---------------" + consenso.getProcesso().getDefeituosos());
                 consenso.setRodada(consenso.maior(consenso.getRodada(), consenso.getUltima_rodada())
-                        + consenso.getProcesso().getEleicao().getProcessos().size());
+                        + consenso.getProcesso().getQuant_processos());
                 //Fase 1 da rodada r: Preparar pedido
                 consenso.setQuorum(consenso.gerarQuorum());
                 Pacote pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.PREPARAR_PEDIDO, new PrepararPedido(consenso.getRodada()));
@@ -64,7 +64,7 @@ public class Proponente implements Runnable {
                                 + pacote.getId_origem() + " Quorum: " + consenso.getQuorum()
                                 + " recebidos = " + quant_confirmacoes_recebidas);
 
-                        consenso.removeAllQuorum(consenso.getDetectorFalhas().getDefeituosos()); //verificar se funciona!
+                        consenso.removeAllQuorum(consenso.getProcesso().getDefeituosos()); //verificar se funciona!
                         if (consenso.getQuorum().contains(pacote.getId_origem()) && consenso.getRodada() >= mensagem_recebida.getRodada_origem()) {
                             respostas.add(mensagem_recebida.getValor());
                             quant_confirmacoes_recebidas++;
@@ -78,7 +78,8 @@ public class Proponente implements Runnable {
                                     pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.PEDIDO_ACEITO, mensagem);
                                     consenso.broadcast(8200, pacote);
 
-                                    aceitou = true;
+                                    consenso.getProcesso().setAceitou(true);
+//                                    aceitou = true;
                                 }
                                 break;
                             }

@@ -25,9 +25,9 @@ public class Aprendiz implements Callable<TipoValor> {
         int quant_confirmacoes_recebidas = 0;
         NetworkService rede = new NetworkService(8300 + consenso.getProcesso().getId());
         while (true) {
+            Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
+            Pacote pacote = future.get();
             if (!consenso.getProcesso().isCrash()) {
-                Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
-                Pacote pacote = future.get();
                 Thread.sleep(500);
                 if (pacote.getTipo() == TipoPacote.CONFIRMACAO_PEDIDO_ACEITO) {
                     ConfirmacaoPedidoAceito mensagem_recebida = (ConfirmacaoPedidoAceito) pacote.getMensagem();
@@ -37,7 +37,7 @@ public class Aprendiz implements Callable<TipoValor> {
                             + pacote.getId_origem() + " Quorum: " + consenso.getQuorum()
                             + " recebidos = " + quant_confirmacoes_recebidas);
 
-                    consenso.removeAllQuorum(consenso.getDetectorFalhas().getDefeituosos()); //verificar se funciona!
+                    consenso.removeAllQuorum(consenso.getProcesso().getDefeituosos()); //verificar se funciona!
                     if (consenso.getRodada() == mensagem_recebida.getRodada() && consenso.getQuorum().contains(pacote.getId_origem())) {
                         quant_confirmacoes_recebidas++;
                         if (quant_confirmacoes_recebidas == consenso.getQuorum().size() - 1) {
@@ -46,6 +46,7 @@ public class Aprendiz implements Callable<TipoValor> {
                             pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.DECISAO, mensagem);
                             consenso.broadcast(8300, pacote);
                             rede.fecharServidor();
+                            consenso.getProcesso().setAceitou(true);
                             return valor;
                         }
                     }
@@ -56,6 +57,7 @@ public class Aprendiz implements Callable<TipoValor> {
                     pacote = new Pacote(consenso.getProcesso().getId(), TipoPacote.DECISAO, mensagem);
                     consenso.broadcast(8300, pacote);
                     rede.fecharServidor();
+                    consenso.getProcesso().setAceitou(true);
                     return valor;
                 }
             }

@@ -5,7 +5,7 @@
  */
 package testes;
 
-import br.edu.uesb.consensospa.main.Principal;
+import br.edu.uesb.consensospa.main.Principal6Processos;
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
@@ -20,10 +20,10 @@ import java.util.logging.Logger;
 public class TesteConsenso {
 
     public static void main(String[] args) throws IOException {
-        Principal processos[] = new Principal[6];
+        Principal6Processos processos[] = new Principal6Processos[6];
         Integer processo_correto = null;
         for (int i = 0; i < processos.length; i++) {
-            processos[i] = new Principal(i, processos.length);
+            processos[i] = new Principal6Processos(i, processos.length);
             if (i == 0 || i == 3) {
                 List<Integer> processos_particao = processos[i].encontrarParticao();
                 processo_correto = processos_particao.get(new Random().nextInt(processos_particao.size()));
@@ -31,7 +31,7 @@ public class TesteConsenso {
             processos[i].getProcesso().setCorreto(processo_correto);
         }
 
-        for (Principal processo : processos) {
+        for (Principal6Processos processo : processos) {
             try {
                 processo.iniciarConsenso();
             } catch (InterruptedException | ExecutionException ex) {

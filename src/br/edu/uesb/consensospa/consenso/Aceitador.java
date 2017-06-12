@@ -41,11 +41,11 @@ public class Aceitador {
             try {
                 NetworkService rede = new NetworkService(8000 + consenso.getProcesso().getId());
                 while (true) {
+                    Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
+                    Pacote pacote = future.get();
                     if (!consenso.getProcesso().isCrash()) {
                         consenso.setValor(consenso.escolherValor());
                         System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Valor proposto: " + consenso.getValor());
-                        Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
-                        Pacote pacote = future.get();
                         PrepararPedido mensagem_recebida = (PrepararPedido) pacote.getMensagem();
                         System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Recebido: " + pacote + " do o processo " + pacote.getId_origem());
                         if (pacote.getTipo() == TipoPacote.PREPARAR_PEDIDO && mensagem_recebida.getRodada() > consenso.maior(consenso.getRodada(), consenso.getUltima_rodada())) {
@@ -70,9 +70,9 @@ public class Aceitador {
             try {
                 NetworkService rede = new NetworkService(8200 + consenso.getProcesso().getId());
                 while (true) {
+                    Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
+                    Pacote pacote = future.get();
                     if (!consenso.getProcesso().isCrash()) {
-                        Future<Pacote> future = consenso.getProcesso().getExecutorService().submit(rede);
-                        Pacote pacote = future.get();
                         PedidoAceito mensagem_recebida = (PedidoAceito) pacote.getMensagem();
                         System.out.println("Processo[" + consenso.getProcesso().getId() + "]: Pacote Recebido: " + pacote + " do o processo " + pacote.getId_origem());
                         if (pacote.getTipo() == TipoPacote.PEDIDO_ACEITO && mensagem_recebida.getRodada() >= consenso.maior(consenso.getRodada(), consenso.getUltima_rodada())) {

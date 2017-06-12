@@ -29,7 +29,7 @@ public class Consenso implements Runnable {
     private TipoValor valor;
     private List<Integer> quorum;
     private final Processo processo;
-    private final DetectorFalhas detectorFalhas;
+    private DetectorFalhas detectorFalhas;
 
     public Consenso(Processo processo) {
         this.processo = processo;
@@ -93,7 +93,7 @@ public class Consenso implements Runnable {
 
         List<Integer> q = new ArrayList<>();
         for (Integer processo_aux : processo.getProcessos()) {
-            if (!detectorFalhas.getDefeituosos().contains(processo_aux)) {
+            if (!processo.getDefeituosos().contains(processo_aux)) {
                 q.add(processo_aux);
             }
         }
@@ -210,5 +210,9 @@ public class Consenso implements Runnable {
 
     public DetectorFalhas getDetectorFalhas() {
         return detectorFalhas;
+    }
+
+    public void novoDetectorFalhas() {
+        detectorFalhas = new DetectorFalhas(processo, 9000 + processo.getId());
     }
 }

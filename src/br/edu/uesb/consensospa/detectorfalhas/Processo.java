@@ -20,19 +20,22 @@ import org.jgrapht.DirectedGraph;
  */
 public class Processo {
 
-    public static int[] MUTEX = {0, 0, 0, 0, 0, 0};
+//    public static int[] MUTEX = {0, 0, 0, 0, 0, 0}; //Para 6 processos
+    public static int[] MUTEX = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Para 20 processos
 
     private final int id;
     private final int quant_processos;
     private final List<Integer> processos;
+    private final List<Integer> defeituosos;
     private List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas;
-    private DetectorFalhas detectorFalhas;
+//    private DetectorFalhas detectorFalhas;
     private Consenso consenso;
     private Eleicao eleicao;
     private TipoQos[][] qos;
     private final ExecutorService executorService;
     private boolean correto;
     private boolean crash;
+    private boolean aceitou;
 
     public Processo(int id, int quant_processos, List<Integer> processos, List<DirectedGraph<Integer, DefaultEdge>> particoes_sincronas, TipoQos[][] qos) {
         this.id = id;
@@ -41,7 +44,9 @@ public class Processo {
         this.particoes_sincronas = particoes_sincronas;
         this.qos = qos;
         this.executorService = Executors.newCachedThreadPool();
+        this.defeituosos = new ArrayList<>();
         this.crash = false;
+        this.aceitou = false;
     }
 
     public void setCorreto(int processo_correto) {
@@ -62,10 +67,6 @@ public class Processo {
 
     public List<DirectedGraph<Integer, DefaultEdge>> getParticoes_sincronas() {
         return particoes_sincronas;
-    }
-
-    public DetectorFalhas getDetectorFalhas() {
-        return detectorFalhas;
     }
 
     public int getQuant_processos() {
@@ -93,15 +94,11 @@ public class Processo {
     }
 
     public void novoEleicao() {
-        eleicao = new Eleicao(id, processos, new ArrayList<>(), particoes_sincronas);
+        eleicao = new Eleicao(this);
     }
 
     public void novoConsenso() {
         consenso = new Consenso(this);
-    }
-
-    public void novoDetectorFalhas() {
-        detectorFalhas = new DetectorFalhas(this, 9000 + id);
     }
 
     public Eleicao getEleicao() {
@@ -122,6 +119,26 @@ public class Processo {
         MUTEX[getId()] = 1;
         this.crash = crash;
         MUTEX[getId()] = 0;
+    }
+
+    public List<Integer> getDefeituosos() {
+        return defeituosos;
+    }
+
+    public boolean removeDefeituoso(Integer processo) {
+        return defeituosos.remove(processo);
+    }
+
+    public void addDefeituoso(Integer processo) {
+        defeituosos.add(processo);
+    }
+
+    public boolean isAceitou() {
+        return aceitou;
+    }
+
+    public void setAceitou(boolean aceitou) {
+        this.aceitou = aceitou;
     }
 
 }
